@@ -209,7 +209,7 @@ export function MissionBottomSheet({
       >
         <div className="flex items-center gap-3 px-4 py-3">
           {/* Fragment icon */}
-          <span className="text-xl shrink-0">{chapter.fragment.icon}</span>
+          <img src={chapter.fragment.icon} alt={chapter.fragment.name} className="shrink-0" style={{ width: 44, height: 44, objectFit: 'contain' }} />
 
           {/* Chapter title */}
           <div className="flex-1 min-w-0">

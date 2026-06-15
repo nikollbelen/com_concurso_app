@@ -167,13 +167,28 @@ export default function StudentPanelPage() {
                 const earned = earnedFragments.includes(ch.fragment.id)
                 return (
                   <div key={ch.id} className="flex flex-col items-center gap-1.5">
-                    <div className="w-full aspect-square rounded-2xl flex items-center justify-center text-2xl relative"
+                    <div className="w-full aspect-square rounded-2xl flex items-center justify-center relative"
                       style={{
                         background: earned ? `${ch.color}22` : 'rgba(255,255,255,0.04)',
                         border: earned ? `1.5px solid ${ch.color}60` : '1.5px solid rgba(255,255,255,0.08)',
                         boxShadow: earned ? `0 0 12px ${ch.color}40` : 'none',
                       }}>
-                      {earned ? <span>{ch.fragment.icon}</span> : <Lock className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.2)' }} />}
+                      <img
+                        src={ch.fragment.icon}
+                        alt={ch.fragment.name}
+                        style={{
+                          width: '82%',
+                          height: '82%',
+                          objectFit: 'contain',
+                          filter: earned ? 'none' : 'grayscale(100%) brightness(0.35)',
+                          transition: 'filter 0.3s ease',
+                        }}
+                      />
+                      {!earned && (
+                        <div className="absolute inset-0 flex items-end justify-end p-1.5">
+                          <Lock className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                        </div>
+                      )}
                       {earned && (
                         <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
                           style={{ background: '#00e676', boxShadow: '0 0 6px rgba(0,230,118,0.7)' }}>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react'
+import Image from 'next/image'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 
 export default function LoginPage() {
@@ -47,25 +48,24 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-sm px-6 flex flex-col items-center gap-8">
 
         {/* Logo */}
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center">
           <div
-            className="w-20 h-20 rounded-3xl mx-auto mb-5 flex items-center justify-center text-4xl"
+            className="relative mb-4"
             style={{
-              background: 'linear-gradient(135deg, #00b4d8, #0077b6)',
-              boxShadow: '0 8px 0 rgba(0,0,0,0.3), 0 0 40px rgba(0,168,255,0.35), inset 0 2px 0 rgba(255,255,255,0.25)',
-              border: '2px solid rgba(255,255,255,0.2)',
+              filter: 'drop-shadow(0 0 32px rgba(0,168,255,0.45)) drop-shadow(0 8px 24px rgba(0,0,0,0.5))',
             }}
           >
-            🗺️
+            <Image
+              src="/images/logo_principal.png"
+              alt="La Búsqueda de los Guardianes de Arequipa"
+              width={180}
+              height={180}
+              priority
+              loading="eager"
+              className="object-contain"
+              style={{ width: 180, height: 'auto' }}
+            />
           </div>
-          <p className="text-[11px] uppercase tracking-[0.3em] font-bold mb-1"
-            style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#00f0ff' }}>
-            La Búsqueda de los
-          </p>
-          <h1 className="text-2xl font-black leading-tight text-white"
-            style={{ fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.03em' }}>
-            Guardianes de Arequipa
-          </h1>
         </div>
 
         {/* Form */}

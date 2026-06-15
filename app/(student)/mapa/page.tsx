@@ -28,6 +28,7 @@ import missionsRaw from '@/data/json/missions.json'
 import teamDataRaw from '@/data/json/teams.json'
 import schoolsRaw  from '@/data/json/schools.json'
 
+import Image from 'next/image'
 import { Trophy, Navigation, LogIn, LogOut, LayoutDashboard } from 'lucide-react'
 
 /* ── types ────────────────────────────────────────────────── */
@@ -114,7 +115,7 @@ function UserDot({ position }: { position: UserPosition }) {
 function NoTokenScreen() {
   return (
     <div className="h-dvh flex flex-col items-center justify-center gap-4 p-8 text-center" style={{ background: '#0d1117' }}>
-      <span className="text-5xl">🗺️</span>
+      <Image src="/images/logo_principal.png" alt="Guardianes de Arequipa" width={100} height={100} className="object-contain opacity-60" style={{ width: 100, height: 'auto' }} />
       <p className="font-bold text-lg" style={{ fontFamily: 'var(--font-cinzel), serif', color: '#00f0ff' }}>Falta el token de Mapbox</p>
       <p className="text-sm max-w-xs" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.4)' }}>
         Crea <code style={{ color: '#ff9500' }}>.env.local</code> y añade{' '}
@@ -130,9 +131,8 @@ function LoadingScreen() {
   return (
     <div className="h-dvh flex items-center justify-center" style={{ background: '#0d1117' }}>
       <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
-          style={{ background: 'linear-gradient(135deg,#00b4d8,#0077b6)', boxShadow: '0 0 30px rgba(0,168,255,0.4)', animation: 'neon-pulse 1.5s ease-in-out infinite' }}>
-          🗺️
+        <div style={{ filter: 'drop-shadow(0 0 24px rgba(0,168,255,0.5))', animation: 'neon-pulse 1.5s ease-in-out infinite' }}>
+          <Image src="/images/logo_principal.png" alt="Guardianes de Arequipa" width={90} height={90} priority loading="eager" className="object-contain" style={{ width: 90, height: 'auto' }} />
         </div>
         <p className="text-sm uppercase tracking-widest" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.3)' }}>
           Cargando...
@@ -164,17 +164,10 @@ function PublicMapView({ onLogin }: { onLogin: () => void }) {
         <div className="glass-panel hud-scanline rounded-3xl p-8 text-center w-full max-w-xs"
           style={{ border: '1px solid rgba(0,240,255,0.25)', boxShadow: '0 8px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,240,255,0.04)' }}>
 
-          <div className="w-20 h-20 rounded-3xl mx-auto mb-5 flex items-center justify-center text-4xl"
-            style={{ background: 'linear-gradient(135deg,#00b4d8,#0077b6)', boxShadow: '0 6px 0 rgba(0,0,0,0.3), 0 0 30px rgba(0,168,255,0.4)', border: '2px solid rgba(255,255,255,0.2)' }}>
-            🗺️
+          <div className="flex justify-center mb-4" style={{ filter: 'drop-shadow(0 0 20px rgba(0,168,255,0.4))' }}>
+            <Image src="/images/logo_principal.png" alt="Guardianes de Arequipa" width={130} height={130} loading="eager" className="object-contain" style={{ width: 130, height: 'auto' }} />
           </div>
 
-          <p className="text-[10px] uppercase tracking-[0.3em] mb-1" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#00f0ff' }}>
-            La Búsqueda de los
-          </p>
-          <h1 className="text-lg font-black text-white mb-2 leading-tight" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
-            Guardianes de Arequipa
-          </h1>
           <p className="text-sm mb-6" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.4)' }}>
             Inicia sesión para ver las misiones y competir con tu equipo
           </p>
@@ -355,6 +348,12 @@ export default function MapaPage() {
           />
         ))}
       </Map>
+
+      {/* ── Logo watermark ── */}
+      <div className="fixed bottom-4 left-4 z-40 pointer-events-none select-none"
+        style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }}>
+        <Image src="/images/logo_principal.png" alt="" aria-hidden width={52} height={52} className="object-contain opacity-40" style={{ width: 52, height: 'auto' }} />
+      </div>
 
       {/* ── FABs ── */}
       <div className="fixed right-5 z-50 flex flex-col items-end gap-3"

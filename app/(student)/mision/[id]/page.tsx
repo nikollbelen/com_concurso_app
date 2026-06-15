@@ -91,9 +91,12 @@ export default function MisionPage() {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: chapter.color }}>
-            {chapter.fragment.icon} Capítulo {chapter.number} · {chapter.title}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <img src={chapter.fragment.icon} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: chapter.color }}>
+              Capítulo {chapter.number} · {chapter.title}
+            </p>
+          </div>
           <p className="text-sm font-bold text-white truncate" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
             {mission.location}
           </p>
