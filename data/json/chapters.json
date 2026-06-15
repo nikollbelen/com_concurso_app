@@ -1,0 +1,52 @@
+[
+  {
+    "id": "cap-1",
+    "number": 1,
+    "title": "El Secreto del Sillar",
+    "subtitle": "Descubre el alma de la Ciudad Blanca",
+    "fragment": { "id": "frag-sillar", "name": "Fragmento del Sillar", "icon": "🏛️" },
+    "requiredLevel": 1,
+    "color": "#F59E0B",
+    "totalMissions": 5
+  },
+  {
+    "id": "cap-2",
+    "number": 2,
+    "title": "Las Huellas del Misti",
+    "subtitle": "Comprende el poder del volcán guardián",
+    "fragment": { "id": "frag-misti", "name": "Fragmento del Misti", "icon": "🌋" },
+    "requiredLevel": 2,
+    "color": "#EF4444",
+    "totalMissions": 5
+  },
+  {
+    "id": "cap-3",
+    "number": 3,
+    "title": "El Legado del Chili",
+    "subtitle": "Descubre cómo el río forjó la ciudad",
+    "fragment": { "id": "frag-chili", "name": "Fragmento del Chili", "icon": "🌊" },
+    "requiredLevel": 3,
+    "color": "#3B82F6",
+    "totalMissions": 4
+  },
+  {
+    "id": "cap-4",
+    "number": 4,
+    "title": "Ecos de la Historia",
+    "subtitle": "Conoce a los forjadores de Arequipa",
+    "fragment": { "id": "frag-historia", "name": "Fragmento de la Historia", "icon": "📜" },
+    "requiredLevel": 4,
+    "color": "#8B5CF6",
+    "totalMissions": 5
+  },
+  {
+    "id": "cap-5",
+    "number": 5,
+    "title": "El Espíritu de la Ciudad Blanca",
+    "subtitle": "Descubre las tradiciones vivas de Arequipa",
+    "fragment": { "id": "frag-cultura", "name": "Fragmento de la Cultura", "icon": "🎭" },
+    "requiredLevel": 5,
+    "color": "#10B981",
+    "totalMissions": 5
+  }
+]

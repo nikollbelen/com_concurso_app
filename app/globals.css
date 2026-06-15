@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ── QuestBound accent neon ──────────────────────────────── */
+  --color-game-blue:         #00a8ff;
+  --color-game-neon:         #00f0ff;
+
+  /* ── Status colors ───────────────────────────────────────── */
+  --color-game-red:          #ff3b30;
+  --color-game-green:        #34c759;
+  --color-game-amber:        #ff9500;
+  --color-game-locked:       #475569;
+
+  /* ── Gold / XP ───────────────────────────────────────────── */
+  --color-game-gold:         #f9bd22;
+
+  /* ── Dark glass surfaces ─────────────────────────────────── */
+  --color-surface:           #0f1729;
+  --color-on-surface:        #e8f4ff;
+  --color-on-surface-var:    #94a3b8;
+  --color-outline:           rgba(255,255,255,0.2);
+
+  /* ── Fonts (set via Next.js CSS variables) ───────────────── */
+  --font-display: var(--font-cinzel);
+  --font-game:    var(--font-exo2);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    height: 100%;
+  }
+  body {
+    min-height: 100%;
+    overflow-x: hidden;
+    background-color: #0d1117;
+    color: #e8f4ff;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Cursor pointer en todos los elementos interactivos — fuera de @layer para ganar especificidad */
+button:not(:disabled),
+a[href],
+[role="button"],
+[data-clickable] {
+  cursor: pointer !important;
+}
+
+/* ── Glass panel utility ────────────────────────────────────── */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ── Scanline texture overlay ───────────────────────────────── */
+.hud-scanline {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  background-size: 100% 4px;
+}
+
+/* ── Hide ALL default Mapbox controls ───────────────────────── */
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right,
+.mapboxgl-ctrl-top-left,
+.mapboxgl-ctrl-top-right { display: none !important; }
+.mapboxgl-ctrl-attrib    { display: none !important; }
+
+.mapboxgl-marker { cursor: pointer; }
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes game-bounce {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-9px); }
+}
+
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(0,240,255,0.55), 0 0 24px rgba(0,240,255,0.25); }
+  50%       { box-shadow: 0 0 20px rgba(0,240,255,0.85), 0 0 40px rgba(0,240,255,0.45); }
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%);  }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0;   }
 }

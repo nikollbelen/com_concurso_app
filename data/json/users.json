@@ -1,0 +1,41 @@
+[
+  {
+    "id": "u-001",
+    "name": "Lucas Cóndor",
+    "username": "lcondor",
+    "password": "alumno123",
+    "role": "student",
+    "teamId": "team-1",
+    "schoolName": "Colegio Independencia Americana",
+    "color": "#7C3AED",
+    "level": 2,
+    "levelTitle": "Explorador Histórico"
+  },
+  {
+    "id": "u-002",
+    "name": "Prof. María Quispe",
+    "username": "mquispe",
+    "password": "docente123",
+    "role": "leader",
+    "teamId": "team-1",
+    "schoolName": "Colegio Independencia Americana",
+    "color": "#0891B2"
+  },
+  {
+    "id": "u-003",
+    "name": "Dir. Roberto Flores",
+    "username": "rflores",
+    "password": "director123",
+    "role": "director",
+    "schoolName": "Colegio Independencia Americana",
+    "color": "#059669"
+  },
+  {
+    "id": "u-004",
+    "name": "Admin Sistema",
+    "username": "asistem",
+    "password": "admin2024",
+    "role": "admin",
+    "color": "#DC2626"
+  }
+]

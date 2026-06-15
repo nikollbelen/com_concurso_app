@@ -1,0 +1,165 @@
+'use client'
+
+interface Team {
+  name: string
+  color: string
+  level: number
+  levelTitle: string
+  points: number
+  nextLevelPoints: number
+}
+
+interface GameHeaderProps {
+  team: Team
+}
+
+function Tooltip({ text, align = 'center', dir = 'down' }: { text: string; align?: 'left' | 'center' | 'right'; dir?: 'down' | 'up' }) {
+  const pos = dir === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'
+  const h = align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'
+  return (
+    <div
+      className={`absolute ${pos} ${h} whitespace-nowrap px-2.5 py-1.5 rounded-xl text-[11px] font-semibold pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50`}
+      style={{
+        background: 'rgba(15,23,42,0.92)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        color: 'rgba(255,255,255,0.85)',
+        fontFamily: 'var(--font-exo2), sans-serif',
+        backdropFilter: 'blur(8px)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+      }}
+    >
+      {text}
+    </div>
+  )
+}
+
+export function GameHeader({ team }: GameHeaderProps) {
+  const xpPercent = Math.min(100, Math.round((team.points / team.nextLevelPoints) * 100))
+
+  return (
+    <div className="fixed top-5 left-5 right-5 z-50 flex items-start justify-between gap-3 pointer-events-none">
+
+      {/* ── Left: team card ── */}
+      <div
+        className="glass-panel hud-scanline flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl pointer-events-auto"
+        style={{
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05)',
+          maxWidth: 'calc(100vw - 130px)',
+        }}
+      >
+        {/* Avatar */}
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 text-white"
+          style={{
+            background: `linear-gradient(135deg, ${team.color}dd, ${team.color})`,
+            boxShadow: `0 3px 10px ${team.color}55`,
+            fontFamily: 'var(--font-exo2), sans-serif',
+          }}
+        >
+          {team.name.charAt(0).toUpperCase()}
+        </div>
+
+        {/* Name + XP bar */}
+        <div className="min-w-0 flex-1">
+          <p
+            className="text-[12px] font-bold leading-tight truncate text-white"
+            style={{ fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.02em' }}
+          >
+            {team.name}
+          </p>
+          <p
+            className="text-[9px] font-bold uppercase tracking-[0.12em] leading-none mt-0.5 truncate"
+            style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#00f0ff' }}
+          >
+            {team.levelTitle ?? `Nivel ${team.level}`}
+          </p>
+
+          {/* XP bar with tooltip */}
+          <div className="relative group flex items-center gap-2 mt-1">
+            <div
+              className="flex-1 h-1.5 rounded-full overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.1)' }}
+            >
+              <div
+                className="h-full rounded-full relative overflow-hidden"
+                style={{
+                  width: `${xpPercent}%`,
+                  background: 'linear-gradient(90deg, #00a8ff, #00f0ff)',
+                  boxShadow: '0 0 6px rgba(0,240,255,0.7)',
+                  transition: 'width 0.7s ease',
+                }}
+              >
+                <div
+                  className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent"
+                  style={{ animation: 'shimmer 2.5s infinite' }}
+                />
+              </div>
+            </div>
+            <span
+              className="text-[10px] tabular-nums shrink-0"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.4)' }}
+            >
+              {xpPercent}%
+            </span>
+            <Tooltip
+              text={`${team.points} / ${team.nextLevelPoints} XP para el nivel ${team.level + 1}`}
+              align="left"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right: points + level ── */}
+      <div className="flex items-center gap-2 shrink-0 pointer-events-auto">
+
+        {/* Points badge */}
+        <div className="relative group">
+          <div
+            className="glass-panel hud-scanline flex items-center gap-1.5 px-3 py-2.5 rounded-2xl"
+            style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.35), inset 0 0 12px rgba(249,189,34,0.1)' }}
+          >
+            <span
+              className="text-[10px] font-black uppercase tracking-wider"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(249,189,34,0.7)' }}
+            >
+              XP
+            </span>
+            <span
+              className="text-sm font-black tabular-nums"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#f9bd22' }}
+            >
+              {team.points.toLocaleString('es-PE')}
+            </span>
+          </div>
+          <Tooltip text="Puntos de experiencia acumulados" align="right" />
+        </div>
+
+        {/* Level badge */}
+        <div className="relative group">
+          <div
+            className="flex flex-col items-center px-2.5 py-2 rounded-2xl shrink-0"
+            style={{
+              background: 'linear-gradient(160deg, #00b4d8, #0077b6)',
+              boxShadow: '0 4px 0 rgba(0,0,0,0.4), 0 0 16px rgba(0,240,255,0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
+              border: '1.5px solid rgba(0,240,255,0.4)',
+            }}
+          >
+            <span
+              className="text-[8px] leading-none tracking-widest uppercase text-white/70"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif' }}
+            >
+              NV
+            </span>
+            <span
+              className="text-lg font-black leading-none text-white"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif' }}
+            >
+              {team.level}
+            </span>
+          </div>
+          <Tooltip text={`${team.levelTitle ?? `Nivel ${team.level}`} · sube completando misiones`} align="right" />
+        </div>
+      </div>
+    </div>
+  )
+}
