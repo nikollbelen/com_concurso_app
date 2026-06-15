@@ -1,5 +1,7 @@
 'use client'
 
+/* ── types ─────────────────────────────────────────────────── */
+
 interface Team {
   name: string
   color: string
@@ -9,9 +11,11 @@ interface Team {
   nextLevelPoints: number
 }
 
-interface GameHeaderProps {
-  team: Team
-}
+type StudentProps = { role: 'student'; team: Team }
+type StaffProps   = { role: 'leader' | 'director' | 'admin'; name: string; schoolName?: string; color: string }
+export type GameHeaderProps = StudentProps | StaffProps
+
+/* ── Tooltip ─────────────────────────────────────────────── */
 
 function Tooltip({ text, align = 'center', dir = 'down' }: { text: string; align?: 'left' | 'center' | 'right'; dir?: 'down' | 'up' }) {
   const pos = dir === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'
@@ -33,13 +37,29 @@ function Tooltip({ text, align = 'center', dir = 'down' }: { text: string; align
   )
 }
 
-export function GameHeader({ team }: GameHeaderProps) {
+/* ── role config ─────────────────────────────────────────── */
+
+const ROLE_LABEL: Record<'leader' | 'director' | 'admin', string> = {
+  leader:   'Docente Líder',
+  director: 'Director/a',
+  admin:    'Administrador',
+}
+
+const ROLE_SHORT: Record<'leader' | 'director' | 'admin', string> = {
+  leader:   'DOC',
+  director: 'DIR',
+  admin:    'ADM',
+}
+
+/* ── StudentHeader ───────────────────────────────────────── */
+
+function StudentHeader({ team }: { team: Team }) {
   const xpPercent = Math.min(100, Math.round((team.points / team.nextLevelPoints) * 100))
 
   return (
     <div className="fixed top-5 left-5 right-5 z-50 flex items-start justify-between gap-3 pointer-events-none">
 
-      {/* ── Left: team card ── */}
+      {/* Left: team card */}
       <div
         className="glass-panel hud-scanline flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl pointer-events-auto"
         style={{
@@ -47,7 +67,6 @@ export function GameHeader({ team }: GameHeaderProps) {
           maxWidth: 'calc(100vw - 130px)',
         }}
       >
-        {/* Avatar */}
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 text-white"
           style={{
@@ -59,7 +78,6 @@ export function GameHeader({ team }: GameHeaderProps) {
           {team.name.charAt(0).toUpperCase()}
         </div>
 
-        {/* Name + XP bar */}
         <div className="min-w-0 flex-1">
           <p
             className="text-[12px] font-bold leading-tight truncate text-white"
@@ -74,7 +92,6 @@ export function GameHeader({ team }: GameHeaderProps) {
             {team.levelTitle ?? `Nivel ${team.level}`}
           </p>
 
-          {/* XP bar with tooltip */}
           <div className="relative group flex items-center gap-2 mt-1">
             <div
               className="flex-1 h-1.5 rounded-full overflow-hidden"
@@ -109,10 +126,9 @@ export function GameHeader({ team }: GameHeaderProps) {
         </div>
       </div>
 
-      {/* ── Right: points + level ── */}
+      {/* Right: XP + level badges */}
       <div className="flex items-center gap-2 shrink-0 pointer-events-auto">
 
-        {/* Points badge */}
         <div className="relative group">
           <div
             className="glass-panel hud-scanline flex items-center gap-1.5 px-3 py-2.5 rounded-2xl"
@@ -134,7 +150,6 @@ export function GameHeader({ team }: GameHeaderProps) {
           <Tooltip text="Puntos de experiencia acumulados" align="right" />
         </div>
 
-        {/* Level badge */}
         <div className="relative group">
           <div
             className="flex flex-col items-center px-2.5 py-2 rounded-2xl shrink-0"
@@ -162,4 +177,91 @@ export function GameHeader({ team }: GameHeaderProps) {
       </div>
     </div>
   )
+}
+
+/* ── StaffHeader ─────────────────────────────────────────── */
+
+function StaffHeader({ role, name, schoolName, color }: StaffProps) {
+  return (
+    <div className="fixed top-5 left-5 right-5 z-50 flex items-start justify-between gap-3 pointer-events-none">
+
+      {/* Left: welcome card */}
+      <div
+        className="glass-panel hud-scanline flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl pointer-events-auto"
+        style={{
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05)',
+          maxWidth: 'calc(100vw - 90px)',
+        }}
+      >
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 text-white"
+          style={{
+            background: `linear-gradient(135deg, ${color}dd, ${color})`,
+            boxShadow: `0 3px 10px ${color}55`,
+            fontFamily: 'var(--font-exo2), sans-serif',
+          }}
+        >
+          {name.charAt(0).toUpperCase()}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p
+            className="text-[9px] font-bold uppercase tracking-[0.12em] leading-none"
+            style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#00f0ff' }}
+          >
+            {ROLE_LABEL[role]}
+          </p>
+          <p
+            className="text-[12px] font-bold leading-tight truncate text-white mt-0.5"
+            style={{ fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.02em' }}
+          >
+            {name}
+          </p>
+          {schoolName && (
+            <p
+              className="text-[9px] leading-none mt-0.5 truncate"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.4)' }}
+            >
+              {schoolName}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Right: role badge */}
+      <div className="flex items-center shrink-0 pointer-events-auto">
+        <div className="relative group">
+          <div
+            className="flex flex-col items-center px-2.5 py-2 rounded-2xl"
+            style={{
+              background: `linear-gradient(160deg, ${color}cc, ${color}ee)`,
+              boxShadow: `0 4px 0 rgba(0,0,0,0.4), 0 0 16px ${color}44, inset 0 1px 0 rgba(255,255,255,0.25)`,
+              border: `1.5px solid ${color}88`,
+            }}
+          >
+            <span
+              className="text-[8px] leading-none tracking-widest uppercase text-white/70"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif' }}
+            >
+              ROL
+            </span>
+            <span
+              className="text-sm font-black leading-none text-white mt-1"
+              style={{ fontFamily: 'var(--font-exo2), sans-serif' }}
+            >
+              {ROLE_SHORT[role]}
+            </span>
+          </div>
+          <Tooltip text={ROLE_LABEL[role]} align="right" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── GameHeader ──────────────────────────────────────────── */
+
+export function GameHeader(props: GameHeaderProps) {
+  if (props.role === 'student') return <StudentHeader team={props.team} />
+  return <StaffHeader role={props.role} name={props.name} schoolName={props.schoolName} color={props.color} />
 }

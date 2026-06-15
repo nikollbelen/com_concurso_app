@@ -8,18 +8,25 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { GameHeader }         from '@/shared/ui/components/GameHeader'
 import { GpsBanner }          from '@/shared/ui/components/GpsBanner'
 import { FabButton }          from '@/shared/ui/components/FabButton'
+import { DirectorBottomSheet} from '@/shared/ui/components/DirectorBottomSheet'
+import { AdminBottomSheet, type SchoolRank } from '@/shared/ui/components/AdminBottomSheet'
 import { MissionMarker }      from '@/modules/missions/presentation/components/MissionMarker'
 import {
   MissionBottomSheet,
   type SelectedMission,
   type Chapter as BottomSheetChapter,
 } from '@/modules/missions/presentation/components/MissionBottomSheet'
+import {
+  LeaderBottomSheet,
+  type PendingMission,
+} from '@/modules/missions/presentation/components/LeaderBottomSheet'
 import { useAuthStore, ROLE_PANEL } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal }              from '@/shared/ui/components/LogoutModal'
 
 import chaptersRaw from '@/data/json/chapters.json'
 import missionsRaw from '@/data/json/missions.json'
 import teamDataRaw from '@/data/json/teams.json'
+import schoolsRaw  from '@/data/json/schools.json'
 
 import { Trophy, Navigation, LogIn, LogOut, LayoutDashboard } from 'lucide-react'
 
@@ -48,6 +55,17 @@ interface TeamData {
   unlockedChapters: string[]
   earnedFragments: string[]
 }
+interface SchoolsData {
+  ranking: SchoolRank[]
+  schoolStats: Record<string, {
+    rankingPosition: number
+    totalTeams: number
+    activeTeams: number
+    totalMissionsCompleted: number
+    totalPoints: number
+  }>
+  eventStats: { totalSchools: number; totalTeams: number; totalMissionsCompleted: number }
+}
 interface UserPosition { lng: number; lat: number; heading: number | null }
 
 /* ── constants ────────────────────────────────────────────── */
@@ -57,9 +75,10 @@ const AREQUIPA_LNG = -71.5369
 const AREQUIPA_LAT = -16.3989
 const INITIAL_ZOOM = 14
 
-const chapters = chaptersRaw as Chapter[]
+const chapters  = chaptersRaw as Chapter[]
 const missions  = missionsRaw as Mission[]
 const teamData  = teamDataRaw as TeamData
+const schoolsData = schoolsRaw as SchoolsData
 
 /* ── helpers ──────────────────────────────────────────────── */
 
@@ -105,7 +124,7 @@ function NoTokenScreen() {
   )
 }
 
-/* ── Loading screen (while hydrating auth) ────────────────── */
+/* ── Loading screen ───────────────────────────────────────── */
 
 function LoadingScreen() {
   return (
@@ -128,7 +147,6 @@ function LoadingScreen() {
 function PublicMapView({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="relative h-dvh w-full overflow-hidden" style={{ background: '#0d1117' }}>
-      {/* Map — no markers, non-interactive missions */}
       <Map
         mapboxAccessToken={MAPBOX_TOKEN}
         initialViewState={{ longitude: AREQUIPA_LNG, latitude: AREQUIPA_LAT, zoom: INITIAL_ZOOM }}
@@ -140,10 +158,8 @@ function PublicMapView({ onLogin }: { onLogin: () => void }) {
         touchZoomRotate={false}
       />
 
-      {/* Blur overlay */}
       <div className="fixed inset-0 z-10" style={{ background: 'rgba(13,17,23,0.55)', backdropFilter: 'blur(3px)' }} />
 
-      {/* Login card */}
       <div className="fixed inset-0 z-20 flex items-center justify-center p-6">
         <div className="glass-panel hud-scanline rounded-3xl p-8 text-center w-full max-w-xs"
           style={{ border: '1px solid rgba(0,240,255,0.25)', boxShadow: '0 8px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,240,255,0.04)' }}>
@@ -196,10 +212,8 @@ export default function MapaPage() {
   const mapRef     = useRef<MapRef>(null)
   const watchIdRef = useRef<number | null>(null)
 
-  /* hydrate auth on mount */
   useEffect(() => { hydrate() }, [hydrate])
 
-  /* start GPS only when authenticated */
   useEffect(() => {
     if (!user) return
 
@@ -252,14 +266,31 @@ export default function MapaPage() {
   const reviewCount    = activeMissions.filter(m => missionProgress[m.id] === 'review').length
   const hasFragment    = earnedFragments.includes(activeChapter.fragment.id)
 
+  /* ─ leader: pending review missions ─ */
+  const pendingMissions: PendingMission[] = missions
+    .filter(m => missionProgress[m.id] === 'review')
+    .map(m => ({ id: m.id, location: m.location, type: m.type, points: m.points }))
+
+  /* ─ director / admin: school stats ─ */
+  const mySchoolStats = user?.schoolName
+    ? (schoolsData.schoolStats[user.schoolName] ?? null)
+    : null
+  const top3: SchoolRank[] = schoolsData.ranking.slice(0, 3)
+
   /* ─ handlers ─ */
-  const handleActivateGps  = useCallback(() => {
+  const handleActivateGps = useCallback(() => {
     navigator.geolocation.getCurrentPosition(() => setGpsStatus('granted'), () => setGpsStatus('denied'))
   }, [])
-  const handleCenterGps    = useCallback(() => {
+  const handleCenterGps = useCallback(() => {
     if (userPos) mapRef.current?.easeTo({ center: [userPos.lng, userPos.lat], duration: 800 })
   }, [userPos])
-  const handleMarkerClick  = useCallback((id: string) => setSelectedId(prev => prev === id ? null : id), [])
+
+  /* only students interact with markers */
+  const handleMarkerClick = useCallback((id: string) => {
+    if (user?.role !== 'student') return
+    setSelectedId(prev => prev === id ? null : id)
+  }, [user?.role])
+
   const handleCloseSheet   = useCallback(() => setSelectedId(null), [])
   const handleGoToMission  = useCallback((id: string) => router.push(`/mision/${id}`), [router])
   const handleConfirmLogout = useCallback(() => { logout(); router.replace('/login') }, [logout, router])
@@ -270,7 +301,7 @@ export default function MapaPage() {
   if (!isHydrated) return <LoadingScreen />
   if (!user)       return <PublicMapView onLogin={() => router.push('/login')} />
 
-  /* ─ bottom-sheet chapter ─ */
+  /* ─ bottom-sheet chapter (student only) ─ */
   const sheetChapter: BottomSheetChapter = {
     id: activeChapter.id, number: activeChapter.number, title: activeChapter.title,
     fragment: activeChapter.fragment, color: activeChapter.color, totalMissions: activeChapter.totalMissions,
@@ -279,17 +310,29 @@ export default function MapaPage() {
   return (
     <div className="relative h-dvh w-full overflow-hidden" style={{ background: '#0d1117' }}>
 
-      {/* ── Header ── */}
-      <GameHeader
-        team={{
-          name:            user.name,
-          color:           user.color,
-          level:           currentTeam.level,
-          levelTitle:      currentTeam.levelTitle,
-          points:          currentTeam.points,
-          nextLevelPoints: currentTeam.nextLevelPoints,
-        }}
-      />
+      {/* ── Header (role-aware) ── */}
+      {user.role === 'student'
+        ? (
+          <GameHeader
+            role="student"
+            team={{
+              name:            user.name,
+              color:           user.color,
+              level:           currentTeam.level,
+              levelTitle:      currentTeam.levelTitle,
+              points:          currentTeam.points,
+              nextLevelPoints: currentTeam.nextLevelPoints,
+            }}
+          />
+        ) : (
+          <GameHeader
+            role={user.role}
+            name={user.name}
+            schoolName={user.schoolName}
+            color={user.color}
+          />
+        )
+      }
 
       {/* ── GPS banner ── */}
       {gpsStatus === 'denied' && <GpsBanner onActivate={handleActivateGps} />}
@@ -322,7 +365,6 @@ export default function MapaPage() {
         <FabButton variant="gold" size="lg" label="Ranking de Colegios" onClick={() => router.push('/ranking')}>
           <Trophy className="w-7 h-7" />
         </FabButton>
-        {/* Profile circle — same group/tooltip pattern as FabButton */}
         <div className="relative shrink-0 group">
           <button
             onClick={handleGoToPanel}
@@ -356,16 +398,40 @@ export default function MapaPage() {
         onCancel={() => setConfirmLogout(false)}
       />
 
-      {/* ── Bottom sheet ── */}
-      <MissionBottomSheet
-        chapter={sheetChapter}
-        completedCount={completedCount}
-        reviewCount={reviewCount}
-        selectedMission={selectedMission}
-        hasFragment={hasFragment}
-        onGoToMission={handleGoToMission}
-        onClose={handleCloseSheet}
-      />
+      {/* ── Bottom sheet (role-aware) ── */}
+      {user.role === 'student' && (
+        <MissionBottomSheet
+          chapter={sheetChapter}
+          completedCount={completedCount}
+          reviewCount={reviewCount}
+          selectedMission={selectedMission}
+          hasFragment={hasFragment}
+          onGoToMission={handleGoToMission}
+          onClose={handleCloseSheet}
+        />
+      )}
+      {user.role === 'leader' && (
+        <LeaderBottomSheet
+          pendingMissions={pendingMissions}
+          teamName={currentTeam.name}
+        />
+      )}
+      {user.role === 'director' && mySchoolStats && (
+        <DirectorBottomSheet
+          schoolName={user.schoolName ?? ''}
+          rankingPosition={mySchoolStats.rankingPosition}
+          totalTeams={mySchoolStats.totalTeams}
+          missionsCompleted={mySchoolStats.totalMissionsCompleted}
+          totalPoints={mySchoolStats.totalPoints}
+        />
+      )}
+      {user.role === 'admin' && (
+        <AdminBottomSheet
+          top3={top3}
+          totalSchools={schoolsData.eventStats.totalSchools}
+          totalMissionsCompleted={schoolsData.eventStats.totalMissionsCompleted}
+        />
+      )}
     </div>
   )
 }

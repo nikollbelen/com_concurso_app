@@ -31,5 +31,77 @@
     "m-2-5": "available"
   },
   "unlockedChapters": ["cap-1", "cap-2"],
-  "earnedFragments": ["frag-sillar"]
+  "earnedFragments": ["frag-sillar"],
+  "schoolTeams": [
+    {
+      "id": "team-1",
+      "name": "Los Cóndores del Sillar",
+      "color": "#DC2626",
+      "level": 2,
+      "levelTitle": "Explorador Histórico",
+      "points": 1250,
+      "missionsCompleted": 6,
+      "missionsInReview": 1,
+      "leader": { "name": "Prof. María Quispe" },
+      "members": [
+        { "id": "u1", "name": "Carlos Mamani" },
+        { "id": "u2", "name": "Lucía Quispe" },
+        { "id": "u3", "name": "Diego Ramos" },
+        { "id": "u4", "name": "Ana Torres" },
+        { "id": "u5", "name": "Marco Flores" }
+      ]
+    },
+    {
+      "id": "team-2",
+      "name": "Los Volcanes del Sur",
+      "color": "#7C3AED",
+      "level": 3,
+      "levelTitle": "Guardián Aprendiz",
+      "points": 1680,
+      "missionsCompleted": 9,
+      "missionsInReview": 0,
+      "leader": { "name": "Prof. Juan Ccopa" },
+      "members": [
+        { "id": "u6",  "name": "Valentina Cruz" },
+        { "id": "u7",  "name": "Sebastián Huanca" },
+        { "id": "u8",  "name": "Fernanda Roca" },
+        { "id": "u9",  "name": "Rodrigo Ponce" }
+      ]
+    },
+    {
+      "id": "team-3",
+      "name": "Los Guardianes del Misti",
+      "color": "#0891B2",
+      "level": 1,
+      "levelTitle": "Explorador Novato",
+      "points": 820,
+      "missionsCompleted": 4,
+      "missionsInReview": 2,
+      "leader": { "name": "Prof. Rosa Mamani" },
+      "members": [
+        { "id": "u10", "name": "Gabriel Quispe" },
+        { "id": "u11", "name": "Camila Torres" },
+        { "id": "u12", "name": "Mateo Ccoa" },
+        { "id": "u13", "name": "Isabella Mamani" },
+        { "id": "u14", "name": "Thiago Llerena" }
+      ]
+    },
+    {
+      "id": "team-4",
+      "name": "Las Águilas del Sillar",
+      "color": "#059669",
+      "level": 2,
+      "levelTitle": "Explorador Histórico",
+      "points": 1050,
+      "missionsCompleted": 5,
+      "missionsInReview": 0,
+      "leader": { "name": "Prof. Pedro Flores" },
+      "members": [
+        { "id": "u15", "name": "Valeria Zegarra" },
+        { "id": "u16", "name": "Alejandro Huayna" },
+        { "id": "u17", "name": "Nicole Pari" },
+        { "id": "u18", "name": "Fernando Coaquira" }
+      ]
+    }
+  ]
 }

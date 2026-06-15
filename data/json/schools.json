@@ -1,0 +1,456 @@
+{
+  "ranking": [
+    { "position":  1, "name": "Colegio Independencia Americana",   "points": 6200, "teams": 4, "missionsCompleted": 52 },
+    { "position":  2, "name": "I.E. Micaela Bastidas",            "points": 5800, "teams": 4, "missionsCompleted": 47 },
+    { "position":  3, "name": "I.E. San Francisco",               "points": 4850, "teams": 3, "missionsCompleted": 38 },
+    { "position":  4, "name": "I.E. La Salle",                    "points": 4200, "teams": 3, "missionsCompleted": 33 },
+    { "position":  5, "name": "I.E. Honorio Delgado",             "points": 3900, "teams": 3, "missionsCompleted": 30 },
+    { "position":  6, "name": "I.E. Jorge Basadre Grohmann",      "points": 3600, "teams": 2, "missionsCompleted": 28 },
+    { "position":  7, "name": "I.E. Mariano Melgar",              "points": 3200, "teams": 3, "missionsCompleted": 25 },
+    { "position":  8, "name": "I.E. Saúl Cantoral",               "points": 2900, "teams": 2, "missionsCompleted": 22 },
+    { "position":  9, "name": "I.E. Francisco Bolognesi",         "points": 2700, "teams": 2, "missionsCompleted": 20 },
+    { "position": 10, "name": "I.E. Daniel Alcides Carrión",      "points": 2500, "teams": 2, "missionsCompleted": 18 },
+    { "position": 11, "name": "I.E. Juan Pablo Vizcardo",         "points": 2200, "teams": 2, "missionsCompleted": 16 },
+    { "position": 12, "name": "I.E. Santa María de la Victoria",  "points": 2000, "teams": 2, "missionsCompleted": 14 },
+    { "position": 13, "name": "I.E. Nuestra Señora del Pilar",    "points": 1800, "teams": 2, "missionsCompleted": 12 },
+    { "position": 14, "name": "I.E. Cristo Rey",                  "points": 1500, "teams": 1, "missionsCompleted": 10 },
+    { "position": 15, "name": "I.E. San Juan Bautista",           "points": 1200, "teams": 1, "missionsCompleted":  8 },
+    { "position": 16, "name": "I.E. Sagrado Corazón",             "points":  900, "teams": 1, "missionsCompleted":  6 }
+  ],
+  "schoolStats": {
+    "Colegio Independencia Americana": {
+      "rankingPosition": 1, "totalTeams": 4, "activeTeams": 3,
+      "totalMissionsCompleted": 52, "totalPoints": 6200
+    },
+    "I.E. San Francisco": {
+      "rankingPosition": 3, "totalTeams": 3, "activeTeams": 2,
+      "totalMissionsCompleted": 38, "totalPoints": 4850
+    }
+  },
+  "eventStats": {
+    "totalSchools": 16,
+    "totalTeams": 48,
+    "totalMissionsCompleted": 312
+  },
+  "schools": [
+    {
+      "id": "school-1",
+      "name": "Colegio Independencia Americana",
+      "director": "Dir. Roberto Flores",
+      "rankingPosition": 1,
+      "totalPoints": 6200,
+      "missionsCompleted": 52,
+      "teams": [
+        {
+          "id": "t-1-1", "name": "Los Cóndores del Sillar", "color": "#DC2626",
+          "level": 3, "levelTitle": "Guardián Aprendiz", "points": 1680,
+          "missionsCompleted": 9, "missionsInReview": 0,
+          "leader": "Prof. María Quispe",
+          "members": ["Carlos Mamani", "Lucía Quispe", "Diego Ramos", "Ana Torres", "Marco Flores"]
+        },
+        {
+          "id": "t-1-2", "name": "Los Volcanes del Sur", "color": "#7C3AED",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1580,
+          "missionsCompleted": 8, "missionsInReview": 1,
+          "leader": "Prof. Juan Ccopa",
+          "members": ["Valentina Cruz", "Sebastián Huanca", "Fernanda Roca", "Rodrigo Ponce"]
+        },
+        {
+          "id": "t-1-3", "name": "Los Guardianes del Misti", "color": "#0891B2",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1540,
+          "missionsCompleted": 8, "missionsInReview": 2,
+          "leader": "Prof. Rosa Mamani",
+          "members": ["Gabriel Quispe", "Camila Torres", "Mateo Ccoa", "Isabella Mamani", "Thiago Llerena"]
+        },
+        {
+          "id": "t-1-4", "name": "Las Águilas del Sillar", "color": "#059669",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1400,
+          "missionsCompleted": 7, "missionsInReview": 0,
+          "leader": "Prof. Pedro Flores",
+          "members": ["Valeria Zegarra", "Alejandro Huayna", "Nicole Pari", "Fernando Coaquira"]
+        }
+      ]
+    },
+    {
+      "id": "school-2",
+      "name": "I.E. Micaela Bastidas",
+      "director": "Dir. Carmen Aguirre",
+      "rankingPosition": 2,
+      "totalPoints": 5800,
+      "missionsCompleted": 47,
+      "teams": [
+        {
+          "id": "t-2-1", "name": "Los Héroes del Colca", "color": "#F59E0B",
+          "level": 3, "levelTitle": "Guardián Aprendiz", "points": 1600,
+          "missionsCompleted": 9, "missionsInReview": 1,
+          "leader": "Prof. Luis Paredes",
+          "members": ["Sofía Ramos", "Andrés Ccopa", "Mariana Huanca", "Joaquín Torres", "Daniela Ponce"]
+        },
+        {
+          "id": "t-2-2", "name": "Los Cronistas del Sillar", "color": "#EC4899",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1520,
+          "missionsCompleted": 8, "missionsInReview": 0,
+          "leader": "Prof. Beatriz Lazo",
+          "members": ["Emilio Zeballos", "Luciana Ccari", "Sebastián Quispe", "Adriana Flores"]
+        },
+        {
+          "id": "t-2-3", "name": "Los Custodios de Yanahuara", "color": "#6366F1",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1450,
+          "missionsCompleted": 7, "missionsInReview": 2,
+          "leader": "Prof. Roberto Díaz",
+          "members": ["Camila Roa", "Matías Chávez", "Renata Mamani", "Diego Salazar", "Valeria Coaquira"]
+        },
+        {
+          "id": "t-2-4", "name": "Los Exploradores del Misti", "color": "#14B8A6",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1230,
+          "missionsCompleted": 6, "missionsInReview": 0,
+          "leader": "Prof. Ana Salas",
+          "members": ["Franco Pari", "Isabela Llerena", "Rodrigo Ccoa", "Natalia Medina"]
+        }
+      ]
+    },
+    {
+      "id": "school-3",
+      "name": "I.E. San Francisco",
+      "director": "Dir. Manuel Cáceres",
+      "rankingPosition": 3,
+      "totalPoints": 4850,
+      "missionsCompleted": 38,
+      "teams": [
+        {
+          "id": "t-3-1", "name": "Los Defensores del Sillar", "color": "#DC2626",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1700,
+          "missionsCompleted": 9, "missionsInReview": 0,
+          "leader": "Prof. Elena Vargas",
+          "members": ["Alicia Condori", "Bruno Apaza", "Claudia Huayna", "David Quispe", "Elena Puma"]
+        },
+        {
+          "id": "t-3-2", "name": "Los Hijos del Chili", "color": "#7C3AED",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1680,
+          "missionsCompleted": 8, "missionsInReview": 1,
+          "leader": "Prof. Julio Arenas",
+          "members": ["Fátima Zegarra", "Gonzalo Ramos", "Helena Cruz", "Iván Flores"]
+        },
+        {
+          "id": "t-3-3", "name": "Las Sombras del Misti", "color": "#0891B2",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1470,
+          "missionsCompleted": 7, "missionsInReview": 2,
+          "leader": "Prof. Carmen Quispe",
+          "members": ["Jorge Mamani", "Karla Ponce", "Leonardo Ccoa", "Marta Salazar", "Nicolás Torres"]
+        }
+      ]
+    },
+    {
+      "id": "school-4",
+      "name": "I.E. La Salle",
+      "director": "Dir. Francisco Salas",
+      "rankingPosition": 4,
+      "totalPoints": 4200,
+      "missionsCompleted": 33,
+      "teams": [
+        {
+          "id": "t-4-1", "name": "Los Vigías del Colca", "color": "#059669",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1550,
+          "missionsCompleted": 8, "missionsInReview": 0,
+          "leader": "Prof. Patricia Huanca",
+          "members": ["Omar Paredes", "Priscila Lazo", "Qori Mamani", "Renato Díaz"]
+        },
+        {
+          "id": "t-4-2", "name": "Los Mensajeros del Inca", "color": "#F59E0B",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1400,
+          "missionsCompleted": 7, "missionsInReview": 1,
+          "leader": "Prof. Sergio Llerena",
+          "members": ["Sandra Coaquira", "Tomás Pari", "Ursula Ccoa", "Victor Zeballos", "Wendy Roa"]
+        },
+        {
+          "id": "t-4-3", "name": "Los Guardianes del Arco", "color": "#EC4899",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1250,
+          "missionsCompleted": 6, "missionsInReview": 0,
+          "leader": "Prof. Diana Chávez",
+          "members": ["Xavier Quispe", "Yolanda Flores", "Zaira Condori", "Abel Apaza"]
+        }
+      ]
+    },
+    {
+      "id": "school-5",
+      "name": "I.E. Honorio Delgado",
+      "director": "Dir. Graciela Medina",
+      "rankingPosition": 5,
+      "totalPoints": 3900,
+      "missionsCompleted": 30,
+      "teams": [
+        {
+          "id": "t-5-1", "name": "Los Centinelas del Misti", "color": "#6366F1",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1400,
+          "missionsCompleted": 7, "missionsInReview": 1,
+          "leader": "Prof. Arturo Salinas",
+          "members": ["Bianca Torres", "César Mamani", "Delia Quispe", "Edgar Huanca"]
+        },
+        {
+          "id": "t-5-2", "name": "Los Hijos del Nevado", "color": "#14B8A6",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1350,
+          "missionsCompleted": 7, "missionsInReview": 0,
+          "leader": "Prof. Flor Ccari",
+          "members": ["Fabricio Zegarra", "Gloria Ponce", "Hugo Ramos", "Iris Flores", "Jaime Cruz"]
+        },
+        {
+          "id": "t-5-3", "name": "Los Buscadores del Sillar", "color": "#DC2626",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1150,
+          "missionsCompleted": 5, "missionsInReview": 0,
+          "leader": "Prof. Karina Puma",
+          "members": ["Kevin Ccoa", "Lorena Salazar", "Manuel Lazo"]
+        }
+      ]
+    },
+    {
+      "id": "school-6",
+      "name": "I.E. Jorge Basadre Grohmann",
+      "director": "Dir. Alfredo Ríos",
+      "rankingPosition": 6,
+      "totalPoints": 3600,
+      "missionsCompleted": 28,
+      "teams": [
+        {
+          "id": "t-6-1", "name": "Los Exploradores del Valle", "color": "#7C3AED",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1900,
+          "missionsCompleted": 10, "missionsInReview": 0,
+          "leader": "Prof. Nelly Arenas",
+          "members": ["Nicolás Vargas", "Olivia Díaz", "Pablo Quispe", "Renata Ccopa"]
+        },
+        {
+          "id": "t-6-2", "name": "Los Custodios del Chili", "color": "#0891B2",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1700,
+          "missionsCompleted": 9, "missionsInReview": 1,
+          "leader": "Prof. Oscar Paredes",
+          "members": ["Sara Huanca", "Tadeo Mamani", "Ursula Ramos"]
+        }
+      ]
+    },
+    {
+      "id": "school-7",
+      "name": "I.E. Mariano Melgar",
+      "director": "Dir. Rebeca Soto",
+      "rankingPosition": 7,
+      "totalPoints": 3200,
+      "missionsCompleted": 25,
+      "teams": [
+        {
+          "id": "t-7-1", "name": "Los Nietos de Melgar", "color": "#059669",
+          "level": 2, "levelTitle": "Explorador Histórico", "points": 1200,
+          "missionsCompleted": 6, "missionsInReview": 1,
+          "leader": "Prof. Víctor León",
+          "members": ["Ana Puno", "Boris Ccari", "Clara Zegarra", "Daniel Coaquira"]
+        },
+        {
+          "id": "t-7-2", "name": "Los Trovadores del Sillar", "color": "#F59E0B",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1100,
+          "missionsCompleted": 6, "missionsInReview": 0,
+          "leader": "Prof. Wendy Huayna",
+          "members": ["Elena Pari", "Fernando Ccoa", "Gabriela Salazar", "Hernán Torres"]
+        },
+        {
+          "id": "t-7-3", "name": "Los Herederos del Misti", "color": "#EC4899",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 900,
+          "missionsCompleted": 4, "missionsInReview": 0,
+          "leader": "Prof. Ignacio Flores",
+          "members": ["Jackeline Quispe", "Kevin Llerena"]
+        }
+      ]
+    },
+    {
+      "id": "school-8",
+      "name": "I.E. Saúl Cantoral",
+      "director": "Dir. Hortensia Pinto",
+      "rankingPosition": 8,
+      "totalPoints": 2900,
+      "missionsCompleted": 22,
+      "teams": [
+        {
+          "id": "t-8-1", "name": "Los Guardianes del Río", "color": "#6366F1",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1550,
+          "missionsCompleted": 8, "missionsInReview": 1,
+          "leader": "Prof. Lorena Cruz",
+          "members": ["Luis Apaza", "Marta Mamani", "Néstor Quispe", "Olga Paredes"]
+        },
+        {
+          "id": "t-8-2", "name": "Los Centinelas del Valle", "color": "#14B8A6",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1350,
+          "missionsCompleted": 7, "missionsInReview": 0,
+          "leader": "Prof. Marco Ccoa",
+          "members": ["Pilar Roa", "Rodrigo Díaz", "Sandra Chávez"]
+        }
+      ]
+    },
+    {
+      "id": "school-9",
+      "name": "I.E. Francisco Bolognesi",
+      "director": "Dir. Jesús Vera",
+      "rankingPosition": 9,
+      "totalPoints": 2700,
+      "missionsCompleted": 20,
+      "teams": [
+        {
+          "id": "t-9-1", "name": "Los Defensores del Perú", "color": "#DC2626",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1450,
+          "missionsCompleted": 7, "missionsInReview": 0,
+          "leader": "Prof. Teresa Lazo",
+          "members": ["Ulises Ramos", "Vanesa Flores", "William Ccari", "Ximena Torres"]
+        },
+        {
+          "id": "t-9-2", "name": "Los Hijos del Sillar", "color": "#7C3AED",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1250,
+          "missionsCompleted": 6, "missionsInReview": 1,
+          "leader": "Prof. Yolanda Puma",
+          "members": ["Yerson Huanca", "Zoila Quispe", "Aldo Ccoa"]
+        }
+      ]
+    },
+    {
+      "id": "school-10",
+      "name": "I.E. Daniel Alcides Carrión",
+      "director": "Dir. Cristina Vargas",
+      "rankingPosition": 10,
+      "totalPoints": 2500,
+      "missionsCompleted": 18,
+      "teams": [
+        {
+          "id": "t-10-1", "name": "Los Exploradores del Colca", "color": "#0891B2",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1300,
+          "missionsCompleted": 6, "missionsInReview": 0,
+          "leader": "Prof. Benigno Salinas",
+          "members": ["Brenda Medina", "César Paredes", "Doris Mamani", "Ernesto Quispe"]
+        },
+        {
+          "id": "t-10-2", "name": "Los Mensajeros del Sol", "color": "#059669",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1200,
+          "missionsCompleted": 5, "missionsInReview": 1,
+          "leader": "Prof. Felipa Ramos",
+          "members": ["Fabiana Coaquira", "Gustavo Zegarra", "Haydée Cruz"]
+        }
+      ]
+    },
+    {
+      "id": "school-11",
+      "name": "I.E. Juan Pablo Vizcardo",
+      "director": "Dir. Augusto Mendoza",
+      "rankingPosition": 11,
+      "totalPoints": 2200,
+      "missionsCompleted": 16,
+      "teams": [
+        {
+          "id": "t-11-1", "name": "Los Centinelas del Inca", "color": "#F59E0B",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1200,
+          "missionsCompleted": 5, "missionsInReview": 1,
+          "leader": "Prof. Irene Ponce",
+          "members": ["Isidro Flores", "Jacinta Ccari", "Katia Llerena", "Leonardo Torres"]
+        },
+        {
+          "id": "t-11-2", "name": "Los Buscadores del Arco", "color": "#EC4899",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1000,
+          "missionsCompleted": 4, "missionsInReview": 0,
+          "leader": "Prof. Jorge Salazar",
+          "members": ["Milagros Apaza", "Noel Huayna", "Olinda Pari"]
+        }
+      ]
+    },
+    {
+      "id": "school-12",
+      "name": "I.E. Santa María de la Victoria",
+      "director": "Dir. Milagros Quispe",
+      "rankingPosition": 12,
+      "totalPoints": 2000,
+      "missionsCompleted": 14,
+      "teams": [
+        {
+          "id": "t-12-1", "name": "Las Hijas del Sillar", "color": "#6366F1",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1100,
+          "missionsCompleted": 5, "missionsInReview": 0,
+          "leader": "Prof. Patricia Ccoa",
+          "members": ["Pamela Díaz", "Quinisa Mamani", "Rosa Quispe", "Silvana Ramos"]
+        },
+        {
+          "id": "t-12-2", "name": "Las Guardianas del Misti", "color": "#14B8A6",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 900,
+          "missionsCompleted": 4, "missionsInReview": 1,
+          "leader": "Prof. Ricardo Flores",
+          "members": ["Tomasa Cruz", "Úrsula Paredes", "Vera Lazo"]
+        }
+      ]
+    },
+    {
+      "id": "school-13",
+      "name": "I.E. Nuestra Señora del Pilar",
+      "director": "Dir. Neptali Condori",
+      "rankingPosition": 13,
+      "totalPoints": 1800,
+      "missionsCompleted": 12,
+      "teams": [
+        {
+          "id": "t-13-1", "name": "Los Peregrinos del Sillar", "color": "#DC2626",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1000,
+          "missionsCompleted": 5, "missionsInReview": 0,
+          "leader": "Prof. Sandra Huanca",
+          "members": ["Walter Ccari", "Xiomara Puma", "Yesenia Torres", "Zenón Quispe"]
+        },
+        {
+          "id": "t-13-2", "name": "Los Hijos de la Piedra", "color": "#7C3AED",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 800,
+          "missionsCompleted": 4, "missionsInReview": 0,
+          "leader": "Prof. Tania Roa",
+          "members": ["Alonso Coaquira", "Bárbara Zegarra", "Carlos Salazar"]
+        }
+      ]
+    },
+    {
+      "id": "school-14",
+      "name": "I.E. Cristo Rey",
+      "director": "Dir. Valentina Ríos",
+      "rankingPosition": 14,
+      "totalPoints": 1500,
+      "missionsCompleted": 10,
+      "teams": [
+        {
+          "id": "t-14-1", "name": "Los Custodios del Volcán", "color": "#0891B2",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1500,
+          "missionsCompleted": 7, "missionsInReview": 1,
+          "leader": "Prof. Diego Mamani",
+          "members": ["Dora Flores", "Erick Llerena", "Fátima Ccoa", "Gino Paredes", "Hilda Ramos"]
+        }
+      ]
+    },
+    {
+      "id": "school-15",
+      "name": "I.E. San Juan Bautista",
+      "director": "Dir. Rolando Tapia",
+      "rankingPosition": 15,
+      "totalPoints": 1200,
+      "missionsCompleted": 8,
+      "teams": [
+        {
+          "id": "t-15-1", "name": "Los Hijos del Chachani", "color": "#059669",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 1200,
+          "missionsCompleted": 5, "missionsInReview": 1,
+          "leader": "Prof. Iris Ccari",
+          "members": ["Javier Huayna", "Katerin Ponce", "Lionel Torres", "María Quispe"]
+        }
+      ]
+    },
+    {
+      "id": "school-16",
+      "name": "I.E. Sagrado Corazón",
+      "director": "Dir. Elsa Puma",
+      "rankingPosition": 16,
+      "totalPoints": 900,
+      "missionsCompleted": 6,
+      "teams": [
+        {
+          "id": "t-16-1", "name": "Los Principiantes del Misti", "color": "#F59E0B",
+          "level": 1, "levelTitle": "Explorador Novato", "points": 900,
+          "missionsCompleted": 4, "missionsInReview": 0,
+          "leader": "Prof. Noé Salinas",
+          "members": ["Olga Díaz", "Pedro Mamani", "Quintina Cruz"]
+        }
+      ]
+    }
+  ]
+}
