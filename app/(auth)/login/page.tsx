@@ -16,22 +16,20 @@ export default function LoginPage() {
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
 
-  useEffect(() => { hydrate() }, [hydrate])
+  useEffect(() => { void hydrate() }, [hydrate])
   useEffect(() => {
     if (user) router.replace('/mapa')
   }, [user, router])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    setTimeout(() => {
-      const result = login(username, password)
-      if (result === 'invalid') {
-        setError('Usuario o contraseña incorrectos')
-        setLoading(false)
-      }
-    }, 500)
+    const result = await login(username, password)
+    if (result === 'invalid') {
+      setError('Alias o PIN incorrectos. Intenta nuevamente.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -76,7 +74,7 @@ export default function LoginPage() {
             style={{ border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(0,168,255,0.08)' }}>
             <input
               type="text"
-              placeholder="Usuario (ej: nbonilla)"
+              placeholder="Alias (ej: lcondor)"
               value={username}
               onChange={e => setUsername(e.target.value)}
               autoComplete="username"
@@ -91,7 +89,7 @@ export default function LoginPage() {
             style={{ border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(0,168,255,0.08)' }}>
             <input
               type={showPwd ? 'text' : 'password'}
-              placeholder="Contraseña"
+              placeholder="PIN secreto"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"

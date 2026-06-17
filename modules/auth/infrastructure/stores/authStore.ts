@@ -1,29 +1,14 @@
 import { create } from 'zustand'
-import usersRaw from '@/data/json/users.json'
-
-/* ── types ────────────────────────────────────────────────── */
+import { supabase } from '@/shared/infrastructure/supabase/client'
 
 export type Role = 'student' | 'leader' | 'director' | 'admin'
-
-interface MockUser {
-  id: string
-  name: string
-  username: string
-  password: string
-  role: Role
-  teamId?: string
-  schoolName?: string
-  color: string
-  level?: number
-  levelTitle?: string
-}
 
 export interface AuthUser {
   id: string
   name: string
   username: string
   role: Role
-  teamId?: string
+  teamId?: number
   schoolName?: string
   color: string
   level?: number
@@ -33,81 +18,90 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null
   isHydrated: boolean
-  hydrate: () => void
-  login: (username: string, password: string) => 'ok' | 'invalid'
-  loginAs: (role: Role) => void
-  logout: () => void
+  hydrate: () => Promise<void>
+  login: (alias: string, pin: string) => Promise<'ok' | 'invalid'>
+  logout: () => Promise<void>
 }
 
-/* ── helpers ──────────────────────────────────────────────── */
+const LEVEL_TITLES: Record<number, string> = {
+  1: 'Iniciado',
+  2: 'Explorador Histórico',
+  3: 'Guardián Novato',
+  4: 'Guardián Valiente',
+  5: 'Guardián Maestro',
+}
 
-const STORAGE_KEY = 'guardianes-auth'
-const mockUsers = usersRaw as MockUser[]
+interface UsuarioRow {
+  alias: string
+  nombre: string
+  apellidos: string | null
+  team_id: number | null
+  roles: { type: string } | null
+  schools: { name: string; color: string | null } | null
+  teams: { level: number | null } | null
+}
 
-function toAuthUser(u: MockUser): AuthUser {
+async function fetchProfile(userId: string): Promise<AuthUser | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('usuarios')
+    .select('alias, nombre, apellidos, team_id, roles ( type ), schools ( name, color ), teams!usuarios_team_id_fkey ( level )')
+    .eq('id', userId)
+    .single() as { data: UsuarioRow | null; error: unknown }
+
+  console.log('[fetchProfile] error →', error?.code, error?.message, error?.details)
+  console.log('[fetchProfile] data →', data)
+  if (error || !data) return null
+
+  const row = data
+  const level  = row.teams?.level ?? 1
+
   return {
-    id:          u.id,
-    name:        u.name,
-    username:    u.username,
-    role:        u.role,
-    teamId:      u.teamId,
-    schoolName:  u.schoolName,
-    color:       u.color,
-    level:       u.level,
-    levelTitle:  u.levelTitle,
+    id:          userId,
+    name:        [row.nombre, row.apellidos].filter(Boolean).join(' '),
+    username:    row.alias,
+    role:        (row.roles?.type ?? 'student') as Role,
+    teamId:      row.team_id ?? undefined,
+    schoolName:  row.schools?.name,
+    color:       row.schools?.color ?? '#7C3AED',
+    level,
+    levelTitle:  LEVEL_TITLES[level] ?? 'Guardián',
   }
 }
 
-/* ── store ────────────────────────────────────────────────── */
-
 export const useAuthStore = create<AuthState>()((set) => ({
-  user: null,
-  isHydrated: false,
+  user:        null,
+  isHydrated:  false,
 
-  hydrate: () => {
-    if (typeof window === 'undefined') { set({ isHydrated: true }); return }
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        set({ user: JSON.parse(stored) as AuthUser, isHydrated: true })
-        return
-      }
-    } catch { /* ignore malformed data */ }
-    set({ isHydrated: true })
+  hydrate: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { set({ isHydrated: true }); return }
+    const user = await fetchProfile(session.user.id)
+    set({ user, isHydrated: true })
   },
 
-  login: (username, password) => {
-    const found = mockUsers.find(
-      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
-    )
-    if (!found) return 'invalid'
-    const authUser = toAuthUser(found)
-    set({ user: authUser })
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser))
-    }
+  login: async (alias, pin) => {
+    const email = `${alias.trim().toLowerCase()}@guardianes.local`
+    console.log('[login] intentando con:', email)
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pin })
+    console.log('[login] signInWithPassword →', { userId: data?.user?.id, error: error?.message })
+
+    if (error || !data.user) return 'invalid'
+
+    const user = await fetchProfile(data.user.id)
+    console.log('[login] fetchProfile →', user)
+
+    if (!user) return 'invalid'
+    set({ user })
     return 'ok'
   },
 
-  loginAs: (role) => {
-    const found = mockUsers.find(u => u.role === role)
-    if (!found) return
-    const authUser = toAuthUser(found)
-    set({ user: authUser })
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser))
-    }
-  },
-
-  logout: () => {
+  logout: async () => {
+    await supabase.auth.signOut()
     set({ user: null })
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY)
-    }
   },
 }))
-
-/* ── role-based redirect helper ───────────────────────────── */
 
 export const ROLE_REDIRECT: Record<Role, string> = {
   student:  '/mapa',
