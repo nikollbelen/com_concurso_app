@@ -59,6 +59,8 @@ alter table "public"."chapters" add constraint "chapters_id_fragment_fkey" FOREI
 
 alter table "public"."chapters" validate constraint "chapters_id_fragment_fkey";
 
+alter table "public"."mission_progression" drop constraint if exists "mission_progression_status_check";
+
 alter table "public"."mission_progression" add constraint "mission_progression_status_check" CHECK ((status = ANY (ARRAY['available'::text, 'review'::text, 'completed'::text, 'rejected'::text, 'locked'::text]))) not valid;
 
 alter table "public"."mission_progression" validate constraint "mission_progression_status_check";
