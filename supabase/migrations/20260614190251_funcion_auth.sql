@@ -1,36 +1,41 @@
-set check_function_bodies = off;
-
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$DECLARE
-  claims jsonb;
-  usuario_rol uuid;
-  usuario_equipo bigint;
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_role_id uuid;
+  v_team_id bigint;
+  v_claims jsonb;
 BEGIN
-  -- Buscar los datos del usuario en la tabla pública
-  SELECT role_id, team_id INTO usuario_rol, usuario_equipo
+  -- 1. Intentamos obtener los datos del usuario de forma segura
+  SELECT role_id, team_id INTO v_role_id, v_team_id
   FROM public.usuarios
   WHERE id = (event->>'user_id')::uuid;
 
-  -- Leer los claims actuales del evento
-  claims := event->'claims';
+  -- 2. Extraemos los claims actuales (o creamos un objeto vacío si no existen)
+  v_claims := COALESCE(event->'claims', '{}'::jsonb);
 
-  -- Si el usuario tiene un equipo, lo inyectamos en el token
-  IF usuario_equipo IS NOT NULL THEN
-    claims := jsonb_set(claims, '{team_id}', to_jsonb(usuario_equipo));
-  END IF;
+  -- 3. FUSIÓN INTELIGENTE:
+  -- jsonb_build_object agrupa los datos.
+  -- jsonb_strip_nulls elimina automáticamente las llaves que tengan valor NULL.
+  -- El operador || fusiona los nuevos claims con los existentes.
+  v_claims := v_claims || jsonb_strip_nulls(
+    jsonb_build_object(
+      'role_id', v_role_id,
+      'team_id', v_team_id
+    )
+  );
 
-  -- Si el usuario tiene un rol, lo inyectamos en el token
-  IF usuario_rol IS NOT NULL THEN
-    claims := jsonb_set(claims, '{role_id}', to_jsonb(usuario_rol));
-  END IF;
-
-  -- Actualizar el evento con los nuevos claims y retornarlo a Supabase Auth
-  event := jsonb_set(event, '{claims}', claims);
+  -- 4. Reemplazamos los claims empaquetados en el evento original
+  event := jsonb_set(event, '{claims}', v_claims);
+  
   RETURN event;
-END;$function$
-;
 
-
+EXCEPTION WHEN OTHERS THEN
+  -- 5. EL PARACAÍDAS: Si algo falla (ej. error de tipos, tabla borrada, etc.), 
+  -- devolvemos el evento original para que Supabase NO lance el Error 500
+  -- y permita al usuario hacer login de todas formas.
+  RETURN event;
+END;
+$$;
