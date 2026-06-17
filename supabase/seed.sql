@@ -81,7 +81,7 @@ INSERT INTO auth.users (
 ) 
 VALUES (
   '97375ed6-bd60-413f-a496-e245e54c2348', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
-  'asistem@guardianes.local', crypt('secreto123', extensions.gen_salt('bf')), now(), 
+  'asistem@guardianes.local', extensions.crypt('secreto123', extensions.gen_salt('bf')), now(), 
   '{"provider":"email","providers":["email"]}', '{}', now(), now(), 
   '', '', '', ''
 )
@@ -100,7 +100,7 @@ DECLARE
   v_role_student uuid := '11111111-1111-1111-1111-111111111111';
   v_role_leader uuid := '22222222-2222-2222-2222-222222222222';
   v_role_director uuid := '33333333-3333-3333-3333-333333333333';
-  v_dummy_hash text := crypt('secreto123', extensions.gen_salt('bf'));
+  v_dummy_hash text := extensions.crypt('secreto123', extensions.gen_salt('bf'));
   v_nombre text; v_apellido text; v_alias text; v_email text;
   v_school_id uuid; v_team_id bigint; v_leader_id uuid; v_student_id uuid; v_director_id uuid;
   v_school_names text[] := ARRAY['Colegio Independencia Americana', 'I.E. San Francisco', 'Colegio San José', 'Nuestra Señora del Pilar', 'Colegio La Salle'];
