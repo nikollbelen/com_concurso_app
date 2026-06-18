@@ -5,27 +5,18 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, Trophy, Target, Users } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
+import { supabase } from '@/shared/infrastructure/supabase/client'
 
-const SCHOOLS = [
-  { pos: 1,  name: 'I.E. Independencia Americana', short: 'Independencia', points: 1820, missions: 18, teams: 2 },
-  { pos: 2,  name: 'I.E. La Salle',                short: 'La Salle',      points: 1640, missions: 16, teams: 2 },
-  { pos: 3,  name: 'I.E. San Francisco',           short: 'San Francisco',  points: 1250, missions: 12, teams: 2 },
-  { pos: 4,  name: 'I.E. Santa Rosa',              short: 'Santa Rosa',    points: 1100, missions: 11, teams: 2 },
-  { pos: 5,  name: 'I.E. Gran Unidad Escolar',     short: 'Gran Unidad',   points: 980,  missions: 10, teams: 2 },
-  { pos: 6,  name: 'I.E. Padre Damián de Veuster', short: 'Padre Damián',  points: 870,  missions: 9,  teams: 1 },
-  { pos: 7,  name: 'I.E. Glorioso Guzmán',         short: 'Guzmán',        points: 760,  missions: 8,  teams: 2 },
-  { pos: 8,  name: 'I.E. Miguel Grau',             short: 'Miguel Grau',   points: 640,  missions: 7,  teams: 1 },
-  { pos: 9,  name: 'I.E. Honorio Delgado',         short: 'H. Delgado',    points: 540,  missions: 6,  teams: 1 },
-  { pos: 10, name: 'I.E. Aplicación',              short: 'Aplicación',    points: 420,  missions: 5,  teams: 1 },
-  { pos: 11, name: 'I.E. Manuel Muñoz Najar',      short: 'M. Najar',      points: 310,  missions: 4,  teams: 1 },
-  { pos: 12, name: 'I.E. Andrés Avelino Cáceres',  short: 'A. Cáceres',    points: 230,  missions: 3,  teams: 1 },
-  { pos: 13, name: 'I.E. Jorge Basadre',           short: 'J. Basadre',    points: 160,  missions: 2,  teams: 1 },
-  { pos: 14, name: 'I.E. Próceres de la Independencia', short: 'Próceres', points: 90,   missions: 1,  teams: 1 },
-  { pos: 15, name: 'I.E. Francisco Bolognesi',     short: 'Bolognesi',     points: 40,   missions: 1,  teams: 1 },
-  { pos: 16, name: 'I.E. Túpac Amaru II',          short: 'Túpac Amaru',   points: 0,    missions: 0,  teams: 1 },
-]
-
-const MY_SCHOOL = 'San Francisco'
+// Tipos dinámicos para nuestra vista
+type SchoolRanking = {
+  id: string
+  pos: number
+  name: string
+  short: string
+  points: number
+  missions: number
+  teamsCount: number
+}
 
 const MEDAL = {
   1: { emoji: '🥇', color: '#f9bd22', shadow: '0 0 24px rgba(249,189,34,0.4)', bg: 'rgba(249,189,34,0.1)', border: '1.5px solid rgba(249,189,34,0.5)' },
@@ -47,17 +38,64 @@ export default function RankingPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
   const [confirmLogout, setConfirmLogout] = useState(false)
+  
+  // Estados para Supabase
+  const [schools, setSchools] = useState<SchoolRanking[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => { hydrate() }, [hydrate])
   useEffect(() => {
     if (isHydrated && !user) router.replace('/login')
   }, [user, isHydrated, router])
 
-  if (!user) return null
+  // Fetch de Supabase
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('schools')
+          .select('id, name, short, points, missions_completed, teams(id)')
+          .order('points', { ascending: false })
 
-  const myPos  = SCHOOLS.find(s => s.short === MY_SCHOOL)?.pos ?? 0
-  const topXp  = SCHOOLS[0].points
-  const totalMissions = SCHOOLS.reduce((a, s) => a + s.missions, 0)
+        if (error) throw error
+
+        if (data) {
+          const formattedData: SchoolRanking[] = data.map((s, index) => ({
+            id: s.id,
+            pos: index + 1,
+            name: s.name,
+            short: s.short,
+            points: s.points,
+            missions: s.missions_completed || 0,
+            // Validación segura para el JOIN de Supabase
+            teamsCount: Array.isArray(s.teams) ? s.teams.length : 0 
+          }))
+          setSchools(formattedData)
+        }
+      } catch (err) {
+        console.error('Error cargando el ranking:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (user) {
+      fetchRanking()
+    }
+  }, [user])
+
+  if (!user || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
+        <p className="text-sm font-bold animate-pulse" style={{ color: '#00f0ff' }}>Sincronizando con la red de Guardianes...</p>
+      </div>
+    )
+  }
+
+  // Cálculos dinámicos basados en la BD
+  const myPos = schools.find(s => s.id === user.schoolId)?.pos ?? 0
+  const topXp = schools.length > 0 ? schools[0].points : 0
+  const totalMissions = schools.reduce((a, s) => a + s.missions, 0)
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -83,19 +121,21 @@ export default function RankingPage() {
           </div>
           <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.1)' }} />
           <div className="text-center">
-            <p className="text-lg font-black tabular-nums" style={{ color: '#f9bd22' }}>{SCHOOLS.length}</p>
+            <p className="text-lg font-black tabular-nums" style={{ color: '#f9bd22' }}>{schools.length}</p>
             <p className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>colegios</p>
           </div>
         </div>
 
-        <div className="relative group">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-            style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)' }}>
-            <span className="text-xs font-bold" style={{ color: '#00f0ff' }}>Tu pos.</span>
-            <span className="text-sm font-black" style={{ color: '#f9bd22' }}>#{myPos}</span>
+        {myPos > 0 && (
+          <div className="relative group">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+              style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)' }}>
+              <span className="text-xs font-bold" style={{ color: '#00f0ff' }}>Tu pos.</span>
+              <span className="text-sm font-black" style={{ color: '#f9bd22' }}>#{myPos}</span>
+            </div>
+            <Tooltip text={`Tu colegio está en la posición #${myPos} de ${schools.length} colegios`} align="right" />
           </div>
-          <Tooltip text={`Tu colegio está en la posición #${myPos} de ${SCHOOLS.length} colegios`} align="right" />
-        </div>
+        )}
       </div>
 
       {/* ── Content: mobile stack / desktop side-by-side ──── */}
@@ -109,17 +149,17 @@ export default function RankingPage() {
             ── Top 3 ──
           </p>
           <div className="flex items-end justify-center gap-3 mb-6">
-            {([SCHOOLS[1], SCHOOLS[0], SCHOOLS[2]] as typeof SCHOOLS).map((s, i) => {
+            {schools.length >= 3 && ([schools[1], schools[0], schools[2]]).map((s, i) => {
               const posMap = [2, 1, 3] as const
               const rpos   = posMap[i]
               const m      = MEDAL[rpos]
               const heights = ['h-28', 'h-36', 'h-24']
               return (
-                <div key={s.pos} className={`flex flex-col items-center flex-1 ${heights[i]}`}>
+                <div key={s.id} className={`flex flex-col items-center flex-1 ${heights[i]}`}>
                   <div className={`w-full flex-1 rounded-2xl flex flex-col items-center justify-center gap-1 px-2 py-3`}
                     style={{ background: m.bg, border: m.border, boxShadow: m.shadow }}>
                     <span className="text-2xl">{m.emoji}</span>
-                    <p className="text-xs font-black text-white text-center leading-tight">{s.short}</p>
+                    <p className="text-xs font-black text-white text-center leading-tight truncate w-full">{s.short}</p>
                     <p className="text-base font-black tabular-nums" style={{ color: m.color }}>
                       {s.points.toLocaleString('es-PE')}
                     </p>
@@ -136,10 +176,10 @@ export default function RankingPage() {
             <p className="text-[10px] uppercase tracking-widest font-bold mb-3" style={{ color: '#00f0ff' }}>Resumen del evento</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Colegios', value: SCHOOLS.length, color: '#00f0ff' },
+                { label: 'Colegios', value: schools.length, color: '#00f0ff' },
                 { label: 'Misiones completadas', value: totalMissions, color: '#00e676' },
                 { label: 'XP líder', value: `${topXp.toLocaleString('es-PE')}`, color: '#f9bd22' },
-                { label: 'Tu posición', value: `#${myPos}`, color: '#00f0ff' },
+                { label: 'Tu posición', value: myPos > 0 ? `#${myPos}` : '-', color: '#00f0ff' },
               ].map(stat => (
                 <div key={stat.label} className="rounded-xl p-2.5 text-center"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -157,7 +197,6 @@ export default function RankingPage() {
             Todos los colegios
           </p>
 
-          {/* Cabecera */}
           <div className="hidden md:grid gap-3 px-4 mb-1"
             style={{ gridTemplateColumns: '2.5rem 1fr 7rem 4.5rem 4rem' }}>
             <span />
@@ -168,12 +207,12 @@ export default function RankingPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            {SCHOOLS.map(s => {
-              const isMe  = s.short === MY_SCHOOL
+            {schools.map(s => {
+              const isMe  = s.id === user.schoolId
               const pct   = topXp > 0 ? (s.points / topXp) * 100 : 0
               const medal = s.pos <= 3 ? MEDAL[s.pos as 1|2|3] : null
               return (
-                <div key={s.pos} className="glass-panel hud-scanline rounded-2xl px-4 py-3"
+                <div key={s.id} className="glass-panel hud-scanline rounded-2xl px-4 py-3"
                   style={{
                     border: isMe ? '1px solid rgba(0,240,255,0.4)' : '1px solid rgba(255,255,255,0.07)',
                     boxShadow: isMe ? '0 0 16px rgba(0,240,255,0.1)' : 'none',
@@ -228,7 +267,7 @@ export default function RankingPage() {
                     </div>
                     <div className="relative group flex items-center justify-center gap-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
                       <Users className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-sm font-bold">{s.teams}</span>
+                      <span className="text-sm font-bold">{s.teamsCount}</span>
                       <Tooltip text="Equipos participantes de este colegio" align="right" />
                     </div>
                   </div>

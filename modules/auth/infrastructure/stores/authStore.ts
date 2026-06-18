@@ -9,6 +9,8 @@ export interface AuthUser {
   username: string
   role: Role
   teamId?: number
+  schoolId?: string
+  schoolShortName?: string
   schoolName?: string
   color: string
   level?: number
@@ -37,7 +39,7 @@ interface UsuarioRow {
   apellidos: string | null
   team_id: number | null
   roles: { type: string } | null
-  schools: { name: string; color: string | null } | null
+  schools: { id:string,  name: string; short: string; color: string | null } | null
   teams: { level: number | null } | null
 }
 
@@ -45,7 +47,7 @@ async function fetchProfile(userId: string): Promise<AuthUser | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('usuarios')
-    .select('alias, nombre, apellidos, team_id, roles ( type ), schools ( name, color ), teams!usuarios_team_id_fkey ( level )')
+    .select('alias, nombre, apellidos, team_id, roles ( type ), schools ( id, name, short, color ), teams!usuarios_team_id_fkey ( level )')
     .eq('id', userId)
     .single() as { data: UsuarioRow | null; error: unknown }
 
@@ -62,7 +64,9 @@ async function fetchProfile(userId: string): Promise<AuthUser | null> {
     username:    row.alias,
     role:        (row.roles?.type ?? 'student') as Role,
     teamId:      row.team_id ?? undefined,
+    schoolId:     row.schools?.id ?? undefined,
     schoolName:  row.schools?.name,
+    schoolShortName:   row.schools?.short ?? row.schools?.name,
     color:       row.schools?.color ?? '#7C3AED',
     level,
     levelTitle:  LEVEL_TITLES[level] ?? 'Guardián',
