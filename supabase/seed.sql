@@ -104,6 +104,7 @@ DECLARE
   v_nombre text; v_apellido text; v_alias text; v_email text;
   v_school_id uuid; v_team_id bigint; v_leader_id uuid; v_student_id uuid; v_director_id uuid;
   v_school_names text[] := ARRAY['Colegio Independencia Americana', 'I.E. San Francisco', 'Colegio San José', 'Nuestra Señora del Pilar', 'Colegio La Salle'];
+  v_school_short_names text[] := ARRAY['Independencia', 'San Francisco', 'San José', 'Pilar', 'La Salle'];
   v_school_colors text[] := ARRAY['#7C3AED', '#DC2626', '#2563EB', '#059669', '#D97706'];
   v_nombres text[] := ARRAY['Mateo', 'Lucía', 'Diego', 'Camila', 'Leonardo', 'Valeria', 'Sebastián', 'Sofía', 'Matías', 'Mariana', 'Joaquín', 'Valentina', 'Gabriel', 'Isabella', 'Tomás', 'Antonella', 'Alejandro', 'Daniela', 'Lucas', 'Renata'];
   v_apellidos text[] := ARRAY['Mamani', 'Quispe', 'Condori', 'Flores', 'Rodríguez', 'Huamán', 'Cárdenas', 'Vargas', 'Paredes', 'Mendoza', 'Fernández', 'Cáceres', 'Zúñiga', 'Carpio', 'Málaga', 'Pinto'];
@@ -111,7 +112,7 @@ DECLARE
 BEGIN
     FOR i IN 1..5 LOOP
       v_school_id := gen_random_uuid();
-      INSERT INTO public.schools (id, name, color, points, missions_completed) VALUES (v_school_id, v_school_names[i], v_school_colors[i], 0, 0);
+      INSERT INTO public.schools (id, name, short, color, points, missions_completed) VALUES (v_school_id, v_school_names[i], v_school_short_names[i], v_school_colors[i], 0, 0);
 
       -- Director
       v_director_id := gen_random_uuid();
