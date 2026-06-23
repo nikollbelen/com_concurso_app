@@ -17,11 +17,11 @@ INSERT INTO public.roles (id, type) VALUES
 
 -- 2. CREACIÓN DE FRAGMENTOS 
 INSERT INTO public.fragments (id, name, icon) VALUES 
-  ('f1111111-1111-1111-1111-111111111111', 'Fragmento del Sillar', 'sillar.png'),
-  ('f2222222-2222-2222-2222-222222222222', 'Fragmento del Misti', 'misti.png'),
-  ('f3333333-3333-3333-3333-333333333333', 'Fragmento del Chili', 'chili.png'),
-  ('f4444444-4444-4444-4444-444444444444', 'Fragmento de la Historia', 'historia.png'),
-  ('f5555555-5555-5555-5555-555555555555', 'Fragmento de la Cultura', 'cultura.png');
+  ('f1111111-1111-1111-1111-111111111111', 'Fragmento del Sillar', '/images/capitulo1.png'),
+  ('f2222222-2222-2222-2222-222222222222', 'Fragmento del Misti', '/images/capitulo2.png'),
+  ('f3333333-3333-3333-3333-333333333333', 'Fragmento del Chili', '/images/capitulo3.png'),
+  ('f4444444-4444-4444-4444-444444444444', 'Fragmento de la Historia', '/images/capitulo4.png'),
+  ('f5555555-5555-5555-5555-555555555555', 'Fragmento de la Cultura', '/images/capitulo5.png');
 
 -- 3. CREACIÓN DE CAPÍTULOS
 INSERT INTO public.chapters (id, title, number, id_fragment, required_level, total_missions, color) VALUES 
