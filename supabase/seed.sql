@@ -26,13 +26,13 @@ INSERT INTO public.fragments (id, name, icon) VALUES
 -- 3. CREACIÓN DE CAPÍTULOS
 INSERT INTO public.chapters (id, title, number, id_fragment, required_level, total_missions, color) VALUES 
   ('c1111111-1111-1111-1111-111111111111', 'El Secreto del Sillar', 1, 'f1111111-1111-1111-1111-111111111111', 1, 5, '#E2E8F0'),
-  ('c2222222-2222-2222-2222-222222222222', 'Las Huellas del Misti', 2, 'f2222222-2222-2222-2222-222222222222', 2, 5, '#94A3B8'),
+  ('c2222222-2222-2222-2222-222222222222', 'Las Huellas del Misti', 2, 'f2222222-2222-2222-2222-222222222222', 2, 4, '#94A3B8'),
   ('c3333333-3333-3333-3333-333333333333', 'El Legado del Chili', 3, 'f3333333-3333-3333-3333-333333333333', 3, 4, '#38BDF8'),
   ('c4444444-4444-4444-4444-444444444444', 'Ecos de la Historia', 4, 'f4444444-4444-4444-4444-444444444444', 4, 5, '#F59E0B'),
   ('c5555555-5555-5555-5555-555555555555', 'El Espíritu de la Ciudad Blanca', 5, 'f5555555-5555-5555-5555-555555555555', 5, 5, '#10B981');
 
 -- =================================================================================
--- 4. MISIONES OFICIALES EXTRAÍDAS DEL DOCUMENTO DE PROPUESTA (25 Misiones)
+-- 4. MISIONES OFICIALES EXTRAÍDAS DEL DOCUMENTO DE PROPUESTA (24 Misiones)
 -- =================================================================================
 INSERT INTO public.missions (id, id_chapter, points, type, location, question, options, correct_answer) VALUES 
 
