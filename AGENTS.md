@@ -20,7 +20,7 @@ Plataforma web para el concurso inter-escolar **"La Búsqueda de los Guardianes 
 
 ## Arquitectura
 
-Hexagonal + Screaming Architecture + SOLID.
+Hexagonal + Screaming Architecture + SOLID (implementación parcial por ahora).
 
 ```
 modules/<dominio>/
@@ -35,6 +35,9 @@ modules/<dominio>/
     components/           ← componentes React del módulo
     hooks/
 ```
+
+**Nota:** Actualmente solo existen `modules/auth/` (Zustand store) y `modules/missions/` (componentes de presentación). El resto de la lógica de negocio vive directamente en las páginas de `app/`. La arquitectura hexagonal completa está pendiente de implementar.
+
 ## Sistema de colores (Material M3 dark — definido en globals.css `@theme {}`)
 
 | Token CSS var | Hex | Uso |
@@ -88,26 +91,30 @@ Usar con: `style={{ fontFamily: 'var(--font-cinzel), serif' }}`
 | Componente | Archivo | Descripción |
 |---|---|---|
 | `GameHeader` | `shared/ui/components/GameHeader.tsx` | Tarjeta flotante top, glassmorphism |
-| `FabButton` | `shared/ui/components/FabButton.tsx` | FAB Material 3D, `variant: 'primary' \| 'surface'` |
+| `FabButton` | `shared/ui/components/FabButton.tsx` | FAB Material 3D, `variant: 'primary' \| 'surface' \| 'gold'` |
 | `GpsBanner` | `shared/ui/components/GpsBanner.tsx` | Banner naranja cuando GPS denegado |
 | `MissionMarker` | `modules/missions/presentation/components/MissionMarker.tsx` | Marcadores con Lucide icons |
-| `MissionBottomSheet` | `modules/missions/presentation/components/MissionBottomSheet.tsx` | Sheet inferior responsive |
+| `MissionBottomSheet` | `modules/missions/presentation/components/MissionBottomSheet.tsx` | Sheet inferior responsive (alumno) |
+| `LeaderBottomSheet` | `modules/missions/presentation/components/LeaderBottomSheet.tsx` | Sheet inferior responsive (docente) |
+| `AdminBottomSheet` | `shared/ui/components/AdminBottomSheet.tsx` | HUD global con ranking top 3 (auto-contenido, fetch a Supabase) |
+| `DirectorBottomSheet` | `shared/ui/components/DirectorBottomSheet.tsx` | Stats del colegio para director |
+| `LogoutModal` | `shared/ui/components/LogoutModal.tsx` | Modal de confirmación de cierre de sesión |
 
 ## Vistas y su estado
 
-| Ruta | Estado | Archivo |
-|------|--------|---------|
-| `/mapa` | ✅ completa + auth | `app/(student)/mapa/page.tsx` |
-| `/login` | ✅ completa | `app/(auth)/login/page.tsx` |
-| `/mision/[id]` | ⏳ siguiente | `app/(student)/mision/[id]/page.tsx` |
-| `/perfil` | pendiente | `app/(student)/perfil/page.tsx` |
-| `/ranking` | ✅ completa | `app/(student)/ranking/page.tsx` |
-| `/insignias` | pendiente | `app/(student)/insignias/page.tsx` |
-| `/student/panel` | ✅ completa | `app/(student)/panel/page.tsx` |
-| `/leader/panel` | ✅ completa | `app/leader/panel/page.tsx` |
-| `/director/panel` | ✅ placeholder | `app/director/panel/page.tsx` |
-| `/admin/panel` | ✅ placeholder | `app/admin/panel/page.tsx` |
-| `/tablero-vivo` | pendiente | `app/tablero-vivo/page.tsx` |
+| Ruta | Estado | Fuente de datos | Archivo |
+|------|--------|----------------|---------|
+| `/mapa` | ✅ completa | Mock JSON | `app/(student)/mapa/page.tsx` |
+| `/login` | ✅ completa | Supabase Auth | `app/(auth)/login/page.tsx` |
+| `/mision/[id]` | ⏳ siguiente | Mock JSON | `app/(student)/mision/[id]/page.tsx` |
+| `/student/panel` | ✅ completa | Supabase | `app/(student)/panel/page.tsx` |
+| `/ranking` | ✅ completa | Supabase | `app/(student)/ranking/page.tsx` |
+| `/leader/panel` | ✅ completa | Supabase | `app/leader/panel/page.tsx` |
+| `/insignias` | pendiente | Mock JSON | `app/(student)/insignias/page.tsx` |
+| `/director/panel` | ⏳ placeholder | Mock JSON | `app/director/panel/page.tsx` |
+| `/admin/panel` | ⏳ placeholder | Mock JSON | `app/admin/panel/page.tsx` |
+| `/perfil` | pendiente | — | `app/(student)/perfil/page.tsx` |
+| `/tablero-vivo` | pendiente | — | `app/tablero-vivo/page.tsx` |
 
 ## Roles de usuario
 
@@ -124,11 +131,12 @@ Usar con: `style={{ fontFamily: 'var(--font-cinzel), serif' }}`
 | `photo` | Manual docente | 15 pts | `Camera` |
 | `creative` | Manual docente/jurado | 20 pts | `Palette` |
 
-## Estados de misión (4 estados)
+## Estados de misión (5 estados)
 
 - `available` — rojo pulsante (`#F44336`), Lucide icon por tipo de misión
 - `completed` — verde (`#00E676`), `CheckCircle`
 - `review` — naranja pulsante (`#FF9800`), `Clock`
+- `rejected` — rojo oscuro, `XCircle`
 - `locked` — gris (`#546E7A`), `Lock`
 
 ## Variables de entorno
@@ -146,17 +154,38 @@ SUPABASE_SERVICE_ROLE_KEY=
 - Componentes interactivos: `'use client'` al inicio
 - Importar cn: `import { cn } from '@/shared/ui/styles/cn'`
 - Importar mapa: `import Map, { Marker, type MapRef } from 'react-map-gl/mapbox'`
-- JSON cast: `const data = raw as MyType[]`
+- JSON cast: `const data = raw as unknown as MyType[]` (para strict mode de TypeScript 5.9)
 - Supabase via `import { supabase } from '@/shared/infrastructure/supabase/client'`
 - Colores via `style={{}}` inline, NO clases Tailwind para los colores personalizados del juego
 - `safe-area-inset-bottom` en sheets: `paddingBottom: 'max(24px, env(safe-area-inset-bottom))'`
-- Cada vez que hagas una tarea importante, e implementes una nueva feature, guardame en documentos en ./docs lo que haz hecho. Cual ha sido la tarea que haz realizado y cual fue el resultado. Que sea optimizado para que pueda ser utilizado para agentes como contexto.
+- **Siempre ejecutar `npm run build` antes de commitear** para verificar que no hay errores de tipo
+- Cada vez que hagas una tarea importante e implementes una nueva feature, guarda un documento en `./docs/` describiendo qué se hizo y el resultado, optimizado para contexto de agentes.
+
+## Migraciones Supabase
+
+10 migraciones versionadas en `supabase/migrations/`:
+
+| # | Archivo | Propósito |
+|---|---------|-----------|s
+| 1 | `20260614185117_initial_migration.sql` | Schema base: usuarios, schools, teams, roles, chapters, missions, mission_progression |
+| 2 | `20260614190251_funcion_auth.sql` | `custom_access_token_hook` — inyecta role_id/team_id en JWT |
+| 3 | `20260617000000_trigger_nuevo_usuario.sql` | `on_auth_user_created` — auto-crea fila en public.usuarios |
+| 4 | `20260617000001_fix_trigger_upsert.sql` | Fix: ON CONFLICT DO UPDATE |
+| 5 | `20260617000003_hook_permisos.sql` | Grants para supabase_auth_admin |
+| 6 | `20260617000004_rls_policies.sql` | Políticas RLS básicas |
+| 7 | `20260617173441_permisos_auth.sql` | Más permisos, revokes |
+| 8 | `20260617211221_adaptacion_json.sql` | Migración principal: fragments, vista_equipos_completos, trigger de puntos |
+| 9 | `20260618231724_add_school_short.sql` | Columna `short` en schools |
+| 10 | `20260623000000_grant_select.sql` | GRANT SELECT en vista_equipos_completos |
 
 ## Comandos
 
 ```bash
 npm run dev     # desarrollo en http://localhost:3000
-npm run build   # verificar compilación
+npm run build   # verificar compilación (ejecutar siempre antes de commitear)
 npm run lint    # linting
 ```
 
+## Tests
+
+El proyecto **no tiene** infraestructura de tests (sin Jest, Vitest, Playwright). Es una deuda técnica identificada.

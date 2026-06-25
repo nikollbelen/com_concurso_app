@@ -7,13 +7,13 @@ Plataforma web para el concurso inter-escolar **"La Búsqueda de los Guardianes 
 | Capa | Tecnología |
 |------|-----------|
 | Frontend | Next.js 16 · React 19 · TypeScript |
-| Estilos | Tailwind CSS v4 |
-| Mapa | Mapbox GL JS via react-map-gl v8 |
-| Estado | Zustand · TanStack Query |
-| Validación | Zod |
-| Backend | Supabase (PostgreSQL + Auth + Storage) |
+| Estilos | Tailwind CSS v4 (`@theme {}` en globals.css, sin `tailwind.config.ts`) |
+| Mapa | Mapbox GL JS via `react-map-gl/mapbox` v8 |
+| Estado | Zustand v5 (cliente) · TanStack Query v5 (server) |
+| Validación | Zod v4 |
+| Backend | Supabase (PostgreSQL + Auth + Storage + RLS) |
 | Deploy | Vercel (frontend) · Supabase Cloud (BD) |
-| CI/CD | GitHub Actions — deploy automático de migraciones a `develop` |
+| CI/CD | GitHub Actions — deploy automático de migraciones a `main` |
 
 ## Requisitos previos
 
@@ -63,20 +63,23 @@ Abre [http://localhost:3000](http://localhost:3000) — redirige automáticament
 | Tabla | Descripción |
 |-------|-------------|
 | `usuarios` | Perfil público vinculado a `auth.users` (alias, nombre, rol, equipo, colegio) |
-| `roles` | Tipos de usuario: `alumno`, `docente`, `director`, `admin` |
-| `schools` | 16 instituciones educativas participantes |
-| `teams` | Equipos de 4-6 alumnos por colegio |
-| `chapters` | 5 capítulos de la narrativa |
-| `missions` | 24 misiones con coordenadas en Arequipa |
-| `mission_progression` | Estado de cada misión por equipo (evidencias, fotos) |
+| `roles` | Tipos de usuario: `student`, `leader`, `director`, `admin` |
+| `schools` | 16 instituciones educativas participantes (points, missions_completed, short, color) |
+| `teams` | Equipos de 4-6 alumnos por colegio (leader_id, level, points) |
+| `chapters` | 5 capítulos de la narrativa (required_level, id_fragment, color) |
+| `fragments` | 5 fragmentos coleccionables (uno por capítulo) |
+| `missions` | 24 misiones con coordenadas, pregunta, opciones, tipo |
+| `mission_progression` | Estado por equipo: `available`, `review`, `completed`, `rejected`, `locked` |
 | `insignia` | Insignias desbloqueables |
 | `team_insignia` | Relación equipo ↔ insignias obtenidas |
 
-### Custom JWT Hook
+### Vistas y triggers clave
 
-Al hacer login, Supabase ejecuta `custom_access_token_hook` que inyecta en el JWT:
-- `team_id` — el equipo del usuario (accesible sin consultas extra)
-- `role_id` — el UUID del rol (para RLS y control de acceso)
+| Objeto | Propósito |
+|--------|-----------|
+| `vista_equipos_completos` | Denormaliza teams + schools + miembros (JSON) + fragmentos (JSON) |
+| `trigger_mision_completada` → `actualizar_estadisticas_mision()` | Suma puntos al equipo/colegio y maneja level-up al aprobar misión |
+| `custom_access_token_hook` | Inyecta `team_id` y `role_id` en claims JWT en cada login |
 
 ### Migraciones locales (opcional)
 
@@ -88,45 +91,53 @@ supabase db push        # sube migraciones al proyecto remoto
 
 ### Deploy automático (CI/CD)
 
-Cada push a la rama `develop` dispara el workflow `.github/workflows/deploy_migration_dev.yml`
-que aplica las migraciones pendientes al proyecto remoto.
+Cada push a la rama `main` con cambios en `supabase/migrations/` dispara el workflow `.github/workflows/deploy_migration_dev.yml` que aplica las migraciones pendientes al proyecto remoto.
 
 Requiere dos secretos en GitHub Actions:
 - `SUPABASE_ACCESS_TOKEN` — token personal de Supabase CLI
 - `SUPABASE_DB_URL` — connection string de la BD remota
 
+### Seed de datos
+
+- `supabase/seed.sql` — genera datos de prueba (5 escuelas, 15 equipos, ~96 usuarios, admin `asistem`)
+- `scripts/seed-users.mjs` — script Node.js alternativo que usa `SUPABASE_SERVICE_ROLE_KEY`
+
 ## Scripts disponibles
 
 ```bash
 npm run dev      # servidor de desarrollo (hot reload)
-npm run build    # build de producción
+npm run build    # build de producción (verifica tipos y compilación)
 npm run start    # sirve el build de producción
 npm run lint     # ESLint
 ```
+
+> **IMPORTANTE:** Siempre ejecuta `npm run build` antes de commitear para verificar que no hay errores de tipo o compilación.
 
 ## Estructura de carpetas
 
 ```
 app/
-  (auth)/login/          ← autenticación
-  (student)/mapa/        ← VISTA PRINCIPAL — mapa interactivo
-  (student)/mision/[id]/ ← detalle de misión
-  (student)/perfil/      ← perfil del alumno
-  (student)/ranking/     ← ranking
-  (leader)/panel/        ← panel del docente/líder
-  (director)/panel/      ← panel del director
-  (admin)/panel/         ← panel del administrador
-  tablero-vivo/          ← pantalla pública/proyector
+  (auth)/login/              ← autenticación (Supabase Auth)
+  (student)/mapa/            ← VISTA PRINCIPAL — mapa interactivo (mock data)
+  (student)/mision/[id]/     ← detalle de misión (mock data)
+  (student)/perfil/          ← perfil del alumno (pendiente)
+  (student)/ranking/         ← ranking (Supabase)
+  (student)/insignias/       ← insignias (mock data)
+  (student)/panel/           ← panel del estudiante (Supabase)
+  (leader)/panel/            ← panel del docente/líder (Supabase)
+  (director)/panel/          ← panel del director (placeholder, mock data)
+  (admin)/panel/             ← panel del administrador (placeholder, mock data)
+  tablero-vivo/              ← pantalla pública/proyector (pendiente)
 
 modules/                 ← arquitectura hexagonal (screaming)
-  missions/              ← dominio de misiones
+  auth/                  ← autenticación (Zustand store + Supabase)
+  missions/              ← misiones (componentes de presentación)
   teams/                 ← dominio de equipos
   schools/               ← dominio de colegios
   rankings/              ← dominio de rankings
   badges/                ← dominio de insignias
   fragments/             ← dominio de fragmentos
   chapters/              ← dominio de capítulos
-  auth/                  ← autenticación
 
 shared/
   ui/components/         ← componentes UI reutilizables
@@ -147,27 +158,65 @@ data/json/               ← datos mock (temporal hasta integrar Supabase)
   teams.json
 ```
 
+## Estado de la app (vistas)
+
+| Ruta | Estado | Fuente de datos |
+|------|--------|----------------|
+| `/mapa` | ⏳ Placeholder | Mock JSON |
+| `/login` | ✅ Completa | Supabase Auth |
+| `/mision/[id]` | ⏳ Placeholder | Mock JSON |
+| `/student/panel` | ✅ Completa | Supabase |
+| `/ranking` | ✅ Completa | Supabase |
+| `/leader/panel` | ✅ Completa | Supabase |
+| `/insignias` | ⏳ Placeholder | Mock JSON |
+| `/director/panel` | ⏳ Placeholder | Mock JSON |
+| `/admin/panel` | ⏳ Placeholder | Mock JSON |
+| `/perfil` | ⏳ Placeholder | — |
+| `/tablero-vivo` | ⏳ Placeholder | — |
+
 ## Datos mock
 
-Mientras Supabase no esté integrado, todos los datos vienen de `data/json/`. Para simular el progreso de un equipo edita `data/json/teams.json`:
+Mientras no todas las vistas estén migradas a Supabase, algunas páginas siguen usando `data/json/`:
 
+| Archivo | Usado por |
+|---------|-----------|
+| `chapters.json` | `/mapa`, `/mision/[id]` |
+| `missions.json` | `/mapa`, `/mision/[id]` |
+| `teams.json` | `/mapa`, `/mision/[id]`, `/insignias`, `/director/panel` |
+| `schools.json` | `/mapa`, `/director/panel`, `/admin/panel` |
+
+Para simular progreso de un equipo, edita `data/json/teams.json`:
 - `currentChapterId`: capítulo activo
-- `missionProgress`: estado de cada misión (`"completed"`, `"review"`, `"available"`)
+- `missionProgress`: estado de cada misión
 - `unlockedChapters`: array de capítulos desbloqueados
 
-## Estado de la app (vistas completadas)
+## Patrón de conexión a Supabase
 
-- [x] Vista mapa (`/mapa`) — mapa Mapbox con marcadores por estado, bottom sheet, header RPG, FABs
+Todos los paneles que consultan datos reales siguen este patrón (bypass de caché):
 
-## Próximas vistas
+```ts
+const { data: { session } } = await supabase.auth.getSession()
+const { data: usuario } = await supabase.from('usuarios').select('team_id').eq('id', session.user.id).single()
 
-- [ ] Detalle de misión (`/mision/[id]`)
-- [ ] Perfil del alumno (`/perfil`)
-- [ ] Ranking (`/ranking`)
-- [ ] Panel del docente (`/leader/panel`)
-- [ ] Panel admin (`/admin/panel`)
-- [ ] Tablero en vivo (`/tablero-vivo`)
-- [ ] Autenticación (`/login`)
-- [x] Cliente Supabase tipado (`shared/infrastructure/supabase/`)
-- [ ] Autenticación con Supabase Auth (`/login`)
-- [ ] Reemplazar datos mock con queries a Supabase
+// Consultas paralelas
+const [equipo, stats] = await Promise.all([
+  supabase.from('vista_equipos_completos').select('*').eq('id', usuario.team_id).single(),
+  supabase.from('mission_progression').select('*', { count: 'exact', head: true }).eq('team_id', usuario.team_id).eq('status', 'completed'),
+])
+```
+
+## Tests
+
+El proyecto no tiene infraestructura de tests configurada (sin Jest, Vitest, Playwright, ni archivos `.test.ts`). Esto es una deuda técnica pendiente.
+
+## Convenciones de código
+
+- Componentes interactivos: `'use client'` al inicio
+- Colores del juego: via `style={{}}` inline con las variables CSS, NO clases Tailwind
+- Iconos: Lucide React, NO emojis
+- Importar mapa: `import Map, { Marker, type MapRef } from 'react-map-gl/mapbox'`
+- Importar cn: `import { cn } from '@/shared/ui/styles/cn'`
+- Supabase: `import { supabase } from '@/shared/infrastructure/supabase/client'`
+- JSON cast: `const data = raw as unknown as MyType[]` (para strict mode)
+- `safe-area-inset-bottom` en sheets: `paddingBottom: 'max(24px, env(safe-area-inset-bottom))'`
+- Tailwind v4: usar `bg-linear-to-r` no `bg-gradient-to-r`, `shrink-0` no `flex-shrink-0`
