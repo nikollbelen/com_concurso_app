@@ -5,7 +5,7 @@ import { Trophy } from 'lucide-react'
 import { supabase } from '@/shared/infrastructure/supabase/client'
 
 // Interfaces internas adaptadas para los datos reales de Supabase
-interface SchoolRank {
+export interface SchoolRank {
   position: number
   name: string
   points: number

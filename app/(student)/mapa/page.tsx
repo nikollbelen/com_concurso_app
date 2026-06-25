@@ -9,7 +9,7 @@ import { GameHeader }         from '@/shared/ui/components/GameHeader'
 import { GpsBanner }          from '@/shared/ui/components/GpsBanner'
 import { FabButton }          from '@/shared/ui/components/FabButton'
 import { DirectorBottomSheet} from '@/shared/ui/components/DirectorBottomSheet'
-import { AdminBottomSheet, type SchoolRank } from '@/shared/ui/components/AdminBottomSheet'
+import { AdminBottomSheet } from '@/shared/ui/components/AdminBottomSheet'
 import { MissionMarker }      from '@/modules/missions/presentation/components/MissionMarker'
 import {
   MissionBottomSheet,
@@ -57,7 +57,6 @@ interface TeamData {
   earnedFragments: string[]
 }
 interface SchoolsData {
-  ranking: SchoolRank[]
   schoolStats: Record<string, {
     rankingPosition: number
     totalTeams: number
@@ -268,7 +267,6 @@ export default function MapaPage() {
   const mySchoolStats = user?.schoolName
     ? (schoolsData.schoolStats[user.schoolName] ?? null)
     : null
-  const top3: SchoolRank[] = schoolsData.ranking.slice(0, 3)
 
   /* ─ handlers ─ */
   const handleActivateGps = useCallback(() => {
@@ -425,11 +423,7 @@ export default function MapaPage() {
         />
       )}
       {user.role === 'admin' && (
-        <AdminBottomSheet
-          top3={top3}
-          totalSchools={schoolsData.eventStats.totalSchools}
-          totalMissionsCompleted={schoolsData.eventStats.totalMissionsCompleted}
-        />
+        <AdminBottomSheet />
       )}
     </div>
   )

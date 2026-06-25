@@ -61,7 +61,7 @@ export default function StudentPanelPage() {
       .from('usuarios')
       .select('team_id')
       .eq('id', session.user.id)
-      .single();
+      .single()
 
     if (userError || !userData?.team_id) {
       setNoTeam(true);
@@ -86,7 +86,7 @@ export default function StudentPanelPage() {
 
         if (teamRes.data && chaptersRes.data) {
           const teamData = teamRes.data
-          const chaptersData = chaptersRes.data as ChapterData[]
+          const chaptersData = chaptersRes.data as unknown as ChapterData[]
           const progressData = progressRes.data || []
 
           // Cálculos generales
