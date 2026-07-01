@@ -29,7 +29,7 @@ import teamDataRaw from '@/data/json/teams.json'
 import schoolsRaw  from '@/data/json/schools.json'
 
 import Image from 'next/image'
-import { Trophy, Navigation, LogIn, LogOut, LayoutDashboard } from 'lucide-react'
+import { Trophy, LogIn, LogOut, LayoutDashboard, LocateFixed, Loader2 } from 'lucide-react'
 
 /* ── types ────────────────────────────────────────────────── */
 
@@ -96,14 +96,32 @@ function getMissionStatus(
 /* ── Sub-components ───────────────────────────────────────── */
 
 function UserDot({ position }: { position: UserPosition }) {
+  const hasHeading = position.heading !== null && !Number.isNaN(position.heading)
   return (
     <Marker longitude={position.lng} latitude={position.lat} anchor="center">
-      <div className="relative flex items-center justify-center">
-        <div className="absolute rounded-full" style={{ width: 52, height: 52, background: 'rgba(0,168,255,0.18)', border: '2px solid rgba(0,240,255,0.5)', animation: 'pulse-ring 2s ease-out infinite' }} />
-        <div className="absolute rounded-full" style={{ width: 36, height: 36, background: 'rgba(0,168,255,0.15)', animation: 'neon-pulse 2s ease-in-out infinite' }} />
-        <div className="relative w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(to bottom, #00f0ff, #00a8ff)', border: '4px solid #fff', boxShadow: '0 0 20px rgba(0,240,255,0.8), 0 4px 12px rgba(0,0,0,0.5)' }}>
-          <Navigation className="w-6 h-6 text-white drop-shadow-md" fill="white" />
-        </div>
+      <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
+        {/* Anillo de precisión pulsante (estilo Google Maps) */}
+        <div className="absolute rounded-full" style={{ width: 56, height: 56, background: 'rgba(0,168,255,0.16)', border: '2px solid rgba(0,240,255,0.45)', animation: 'pulse-ring 2s ease-out infinite' }} />
+        <div className="absolute rounded-full" style={{ width: 34, height: 34, background: 'rgba(0,168,255,0.15)', animation: 'neon-pulse 2s ease-in-out infinite' }} />
+
+        {/* Cono de dirección — solo si el dispositivo reporta rumbo */}
+        {hasHeading && (
+          <div
+            className="absolute"
+            style={{
+              width: 0, height: 0,
+              borderLeft: '11px solid transparent',
+              borderRight: '11px solid transparent',
+              borderBottom: '22px solid rgba(0,240,255,0.85)',
+              filter: 'drop-shadow(0 0 6px rgba(0,240,255,0.9))',
+              transform: `rotate(${position.heading}deg) translateY(-22px)`,
+              transformOrigin: 'center bottom',
+            }}
+          />
+        )}
+
+        {/* Punto central: brújula sólida azul con borde blanco */}
+        <div className="relative w-6 h-6 rounded-full" style={{ background: 'radial-gradient(circle at 35% 30%, #4de3ff, #00a8ff)', border: '3px solid #fff', boxShadow: '0 0 16px rgba(0,240,255,0.9), 0 2px 6px rgba(0,0,0,0.5)' }} />
       </div>
     </Marker>
   )
@@ -198,6 +216,7 @@ export default function MapaPage() {
 
   const [gpsStatus,      setGpsStatus]      = useState<'unknown' | 'denied' | 'granted'>('unknown')
   const [userPos,        setUserPos]        = useState<UserPosition | null>(null)
+  const [locating,       setLocating]       = useState(false)
   const [selectedId,     setSelectedId]     = useState<string | null>(null)
   const [confirmLogout,  setConfirmLogout]  = useState(false)
 
@@ -206,28 +225,30 @@ export default function MapaPage() {
 
   useEffect(() => { hydrate() }, [hydrate])
 
+  /* Inicia el seguimiento continuo de la posición (idempotente) */
+  const startWatch = useCallback(() => {
+    if (watchIdRef.current !== null) return
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      pos => {
+        setGpsStatus('granted')
+        setUserPos({ lng: pos.coords.longitude, lat: pos.coords.latitude, heading: pos.coords.heading })
+      },
+      () => setGpsStatus('denied'),
+      { enableHighAccuracy: true, maximumAge: 5000 },
+    )
+  }, [])
+
   useEffect(() => {
     if (!user) return
-
-    function startWatch() {
-      if (watchIdRef.current !== null) return
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        pos => {
-          setGpsStatus('granted')
-          setUserPos({ lng: pos.coords.longitude, lat: pos.coords.latitude, heading: pos.coords.heading })
-        },
-        () => setGpsStatus('denied'),
-        { enableHighAccuracy: true, maximumAge: 5000 },
-      )
-    }
 
     navigator.permissions?.query({ name: 'geolocation' })
       .then(result => {
         if (result.state === 'granted') { setGpsStatus('granted'); startWatch() }
         else if (result.state === 'denied') setGpsStatus('denied')
+        // 'prompt' → se pedirá al pulsar "Centrar en mi ubicación"
         result.onchange = () => {
           if (result.state === 'granted') { setGpsStatus('granted'); startWatch() }
-          else setGpsStatus('denied')
+          else if (result.state === 'denied') setGpsStatus('denied')
         }
       })
       .catch(() => setGpsStatus('unknown'))
@@ -238,7 +259,7 @@ export default function MapaPage() {
         watchIdRef.current = null
       }
     }
-  }, [user])
+  }, [user, startWatch])
 
   /* ─ derived data ─ */
   const { currentTeam, missionProgress, unlockedChapters, earnedFragments } = teamData
@@ -270,11 +291,34 @@ export default function MapaPage() {
 
   /* ─ handlers ─ */
   const handleActivateGps = useCallback(() => {
-    navigator.geolocation.getCurrentPosition(() => setGpsStatus('granted'), () => setGpsStatus('denied'))
-  }, [])
+    navigator.geolocation.getCurrentPosition(
+      () => { setGpsStatus('granted'); startWatch() },
+      () => setGpsStatus('denied'),
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }, [startWatch])
+
   const handleCenterGps = useCallback(() => {
-    if (userPos) mapRef.current?.easeTo({ center: [userPos.lng, userPos.lat], duration: 800 })
-  }, [userPos])
+    // Ya tenemos posición → centrar directamente
+    if (userPos) {
+      mapRef.current?.easeTo({ center: [userPos.lng, userPos.lat], zoom: 16, duration: 800 })
+      return
+    }
+    // Primera vez / permiso en 'prompt' → pedir ubicación ahora y centrar al obtenerla
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const next: UserPosition = { lng: pos.coords.longitude, lat: pos.coords.latitude, heading: pos.coords.heading }
+        setGpsStatus('granted')
+        setUserPos(next)
+        mapRef.current?.easeTo({ center: [next.lng, next.lat], zoom: 16, duration: 800 })
+        startWatch()
+        setLocating(false)
+      },
+      () => { setGpsStatus('denied'); setLocating(false) },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }, [userPos, startWatch])
 
   /* only students interact with markers */
   const handleMarkerClick = useCallback((id: string) => {
@@ -356,8 +400,15 @@ export default function MapaPage() {
       {/* ── FABs ── */}
       <div className="fixed right-5 z-50 flex flex-col items-end gap-3"
         style={{ bottom: 'max(104px, calc(env(safe-area-inset-bottom) + 104px))' }}>
-        <FabButton variant="surface" size="md" label="Centrar en mi ubicación" onClick={handleCenterGps}>
-          <Navigation className="w-5 h-5" />
+        <FabButton
+          variant="surface" size="md"
+          label={locating ? 'Buscando tu ubicación…' : 'Centrar en mi ubicación'}
+          onClick={handleCenterGps}
+          disabled={locating}
+        >
+          {locating
+            ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#00a8ff' }} />
+            : <LocateFixed className="w-5 h-5" style={{ color: userPos ? '#00a8ff' : undefined }} />}
         </FabButton>
         <FabButton variant="gold" size="lg" label="Ranking de Colegios" onClick={() => router.push('/ranking')}>
           <Trophy className="w-7 h-7" />
