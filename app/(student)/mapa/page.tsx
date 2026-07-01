@@ -96,29 +96,12 @@ function getMissionStatus(
 /* ── Sub-components ───────────────────────────────────────── */
 
 function UserDot({ position }: { position: UserPosition }) {
-  const hasHeading = position.heading !== null && !Number.isNaN(position.heading)
   return (
     <Marker longitude={position.lng} latitude={position.lat} anchor="center">
       <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
         {/* Anillo de precisión pulsante (estilo Google Maps) */}
         <div className="absolute rounded-full" style={{ width: 56, height: 56, background: 'rgba(0,168,255,0.16)', border: '2px solid rgba(0,240,255,0.45)', animation: 'pulse-ring 2s ease-out infinite' }} />
         <div className="absolute rounded-full" style={{ width: 34, height: 34, background: 'rgba(0,168,255,0.15)', animation: 'neon-pulse 2s ease-in-out infinite' }} />
-
-        {/* Cono de dirección — solo si el dispositivo reporta rumbo */}
-        {hasHeading && (
-          <div
-            className="absolute"
-            style={{
-              width: 0, height: 0,
-              borderLeft: '11px solid transparent',
-              borderRight: '11px solid transparent',
-              borderBottom: '22px solid rgba(0,240,255,0.85)',
-              filter: 'drop-shadow(0 0 6px rgba(0,240,255,0.9))',
-              transform: `rotate(${position.heading}deg) translateY(-22px)`,
-              transformOrigin: 'center bottom',
-            }}
-          />
-        )}
 
         {/* Punto central: brújula sólida azul con borde blanco */}
         <div className="relative w-6 h-6 rounded-full" style={{ background: 'radial-gradient(circle at 35% 30%, #4de3ff, #00a8ff)', border: '3px solid #fff', boxShadow: '0 0 16px rgba(0,240,255,0.9), 0 2px 6px rgba(0,0,0,0.5)' }} />
