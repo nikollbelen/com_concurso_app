@@ -24,16 +24,21 @@ export async function getSchoolRanking(): Promise<SchoolRanking[]> {
 
   if (error) throw new Error(`getSchoolRanking: ${error.message}`)
 
-  return ((data ?? []) as SchoolRow[]).map((row, index) => ({
-    id: row.id,
-    name: row.name,
-    short: row.short ?? row.name,
-    color: row.color ?? '#7C3AED',
-    points: row.points ?? 0,
-    missionsCompleted: row.missions_completed ?? 0,
-    totalTeams: Array.isArray(row.teams) ? row.teams.length : 0,
-    rankingPosition: index + 1,
-  }))
+  // El puesto se asigna SOLO a colegios con puntos > 0 (los demás quedan sin puesto)
+  let rank = 0
+  return ((data ?? []) as SchoolRow[]).map((row) => {
+    const points = row.points ?? 0
+    return {
+      id: row.id,
+      name: row.name,
+      short: row.short ?? row.name,
+      color: row.color ?? '#7C3AED',
+      points,
+      missionsCompleted: row.missions_completed ?? 0,
+      totalTeams: Array.isArray(row.teams) ? row.teams.length : 0,
+      rankingPosition: points > 0 ? ++rank : null,
+    }
+  })
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -68,7 +73,7 @@ export interface SchoolDetail {
   name: string
   director: string
   color: string
-  rankingPosition: number
+  rankingPosition: number | null // null = aún sin puntos → sin puesto
   totalPoints: number
   missionsCompleted: number
   teams: SchoolTeamDetail[]
@@ -132,7 +137,8 @@ export async function getSchoolsDetail(): Promise<SchoolDetail[]> {
     reviewCount.set(r.team_id, (reviewCount.get(r.team_id) ?? 0) + 1)
   }
 
-  return ((data ?? []) as SchoolDetailRow[]).map((row, index) => {
+  let rank = 0
+  return ((data ?? []) as SchoolDetailRow[]).map((row) => {
     const users = row.usuarios ?? []
     const director = users.find((u) => u.role_id === DIRECTOR_ROLE)
 
@@ -157,13 +163,14 @@ export async function getSchoolsDetail(): Promise<SchoolDetail[]> {
       }
     })
 
+    const totalPoints = row.points ?? 0
     return {
       id: row.id,
       name: row.name,
       director: director ? fullName(director) : '—',
       color: row.color ?? '#7C3AED',
-      rankingPosition: index + 1,
-      totalPoints: row.points ?? 0,
+      rankingPosition: totalPoints > 0 ? ++rank : null,
+      totalPoints,
       missionsCompleted: row.missions_completed ?? 0,
       teams,
     }

@@ -4,7 +4,7 @@ import { Users, Trophy, CheckCircle } from 'lucide-react'
 
 interface DirectorBottomSheetProps {
   schoolName: string
-  rankingPosition: number
+  rankingPosition: number | null
   totalTeams: number
   missionsCompleted: number
   totalPoints: number
@@ -60,7 +60,7 @@ export function DirectorBottomSheet({
                 className="text-lg font-black leading-none"
                 style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#FFD600' }}
               >
-                #{rankingPosition}
+                {rankingPosition != null ? `#${rankingPosition}` : '—'}
               </span>
               <span
                 className="text-[8px] uppercase tracking-wider mt-0.5"

@@ -159,7 +159,7 @@ export default function DirectorPanelPage() {
           )}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Posición', value: `#${rankingPos}`, color: '#f9bd22', icon: <Trophy className="w-4 h-4" /> },
+              { label: 'Posición', value: rankingPos === '—' ? '—' : `#${rankingPos}`, color: '#f9bd22', icon: <Trophy className="w-4 h-4" /> },
               { label: 'Equipos',  value: totalTeams,       color: '#00f0ff', icon: <Users  className="w-4 h-4" /> },
               { label: 'Puntos',   value: totalPoints >= 1000 ? `${(totalPoints / 1000).toFixed(1)}k` : totalPoints,
                 color: '#10b981', icon: <span className="text-sm" style={{ lineHeight: 1 }}>⚡</span> },

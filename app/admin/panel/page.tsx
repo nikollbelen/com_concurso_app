@@ -17,7 +17,7 @@ import type {
 
 /* ── constants ─────────────────────────────────────────────── */
 
-const POSITION_COLOR = (pos: number) =>
+const POSITION_COLOR = (pos: number | null) =>
   pos === 1 ? '#FFD600' : pos === 2 ? '#9E9E9E' : pos === 3 ? '#CD7F32' : 'rgba(255,255,255,0.25)'
 
 /* ── TeamDetail ─────────────────────────────────────────────── */
@@ -110,7 +110,7 @@ function SchoolDetailContent({ school, onClose, showClose }: { school: SchoolDet
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-white leading-tight truncate" style={{ fontFamily: 'var(--font-cinzel), serif' }}>{school.name}</p>
           <p className="text-[10px]" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.4)' }}>
-            {school.director} · #{school.rankingPosition} ranking
+            {school.director} · {school.rankingPosition != null ? `#${school.rankingPosition} ranking` : 'sin puesto aún'}
           </p>
         </div>
         {showClose && (
@@ -128,7 +128,7 @@ function SchoolDetailContent({ school, onClose, showClose }: { school: SchoolDet
         {/* Stats */}
         <div className="grid grid-cols-4 gap-2">
           {[
-            { label: 'Posición', value: `#${school.rankingPosition}`, color: POSITION_COLOR(school.rankingPosition), icon: <Trophy className="w-3.5 h-3.5" /> },
+            { label: 'Posición', value: school.rankingPosition != null ? `#${school.rankingPosition}` : '—', color: POSITION_COLOR(school.rankingPosition), icon: <Trophy className="w-3.5 h-3.5" /> },
             { label: 'Equipos',  value: school.teams.length,          color: '#00f0ff', icon: <Users className="w-3.5 h-3.5" /> },
             { label: 'Misiones', value: school.missionsCompleted,     color: '#00E676', icon: <CheckCircle className="w-3.5 h-3.5" /> },
             { label: 'Puntos',   value: totalPoints >= 1000 ? `${(totalPoints / 1000).toFixed(1)}k` : totalPoints,
@@ -286,13 +286,13 @@ export default function AdminPanelPage() {
                     style={{
                       border: isSelected
                         ? '1px solid rgba(0,240,255,0.4)'
-                        : pos <= 3 ? `1px solid ${POSITION_COLOR(pos)}25` : '1px solid rgba(255,255,255,0.07)',
+                        : pos != null && pos <= 3 ? `1px solid ${POSITION_COLOR(pos)}25` : '1px solid rgba(255,255,255,0.07)',
                       background: isSelected ? 'rgba(0,240,255,0.06)' : undefined,
                     }}
                   >
                     <span className="text-base font-black w-8 text-center shrink-0"
                       style={{ color: POSITION_COLOR(pos), fontFamily: 'var(--font-exo2), sans-serif' }}>
-                      #{pos}
+                      {pos != null ? `#${pos}` : '—'}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-white truncate">{school.name}</p>

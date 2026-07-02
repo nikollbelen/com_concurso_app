@@ -7,5 +7,5 @@ export interface SchoolRanking {
   points: number
   missionsCompleted: number
   totalTeams: number
-  rankingPosition: number
+  rankingPosition: number | null // null = aún sin puntos → sin puesto
 }
