@@ -173,15 +173,13 @@ export default function HomePage() {
           will-change: transform, opacity;
         }
         .fairy-1 {
-          width: 9px; height: 9px;
-          background: radial-gradient(circle, #ffffff 0%, #9fecff 38%, rgba(0,168,255,0) 66%);
-          box-shadow: 0 0 24px 9px rgba(120,225,255,0.95), 0 0 52px 20px rgba(0,168,255,0.55);
+          width: 240px; height: 240px; margin: -120px 0 0 -120px;
+          background: radial-gradient(circle, rgba(190,240,255,0.85) 0%, rgba(90,205,255,0.42) 22%, rgba(0,168,255,0.14) 45%, rgba(0,168,255,0) 70%);
           animation: fairy-path-8 17s linear infinite, fairy-twinkle 2.6s ease-in-out infinite;
         }
         .fairy-2 {
-          width: 7px; height: 7px;
-          background: radial-gradient(circle, #fffefb 0%, #ffd257 38%, rgba(249,189,34,0) 66%);
-          box-shadow: 0 0 22px 8px rgba(255,214,90,0.9), 0 0 46px 18px rgba(249,189,34,0.48);
+          width: 190px; height: 190px; margin: -95px 0 0 -95px;
+          background: radial-gradient(circle, rgba(255,238,190,0.85) 0%, rgba(255,205,90,0.42) 22%, rgba(249,189,34,0.13) 45%, rgba(249,189,34,0) 70%);
           animation: fairy-path-8 23s linear infinite reverse, fairy-twinkle 2s ease-in-out infinite;
           animation-delay: -9s, 0s;
         }
