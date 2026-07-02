@@ -173,16 +173,16 @@ export default function HomePage() {
           will-change: transform, opacity;
         }
         .fairy-1 {
-          width: 10px; height: 10px;
-          background: radial-gradient(circle, #ffffff 0%, #8fe8ff 45%, rgba(0,168,255,0) 72%);
-          box-shadow: 0 0 12px 4px rgba(80,210,255,0.55), 0 0 26px 10px rgba(0,168,255,0.25);
-          animation: fairy-path-1 24s ease-in-out infinite, fairy-twinkle 3.2s ease-in-out infinite;
+          width: 16px; height: 16px;
+          background: radial-gradient(circle, #ffffff 0%, #8fe8ff 48%, rgba(0,168,255,0) 72%);
+          box-shadow: 0 0 20px 7px rgba(80,210,255,0.75), 0 0 42px 16px rgba(0,168,255,0.42);
+          animation: fairy-path-1 16s ease-in-out infinite, fairy-twinkle 2.6s ease-in-out infinite;
         }
         .fairy-2 {
-          width: 7px; height: 7px;
-          background: radial-gradient(circle, #fff6d6 0%, #f9bd22 45%, rgba(249,189,34,0) 72%);
-          box-shadow: 0 0 10px 3px rgba(249,189,34,0.5), 0 0 22px 8px rgba(249,189,34,0.2);
-          animation: fairy-path-2 30s ease-in-out infinite, fairy-twinkle 2.4s ease-in-out infinite;
+          width: 12px; height: 12px;
+          background: radial-gradient(circle, #fff6d6 0%, #f9bd22 48%, rgba(249,189,34,0) 72%);
+          box-shadow: 0 0 17px 6px rgba(249,189,34,0.7), 0 0 36px 14px rgba(249,189,34,0.35);
+          animation: fairy-path-2 20s ease-in-out infinite, fairy-twinkle 2s ease-in-out infinite;
           animation-delay: -6s, 0s;
         }
         @keyframes fairy-path-1 {
@@ -200,7 +200,7 @@ export default function HomePage() {
           100% { transform: translate(88vw, 30vh); }
         }
         @keyframes fairy-twinkle {
-          0%, 100% { opacity: 0.45; }
+          0%, 100% { opacity: 0.6; }
           50%      { opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
