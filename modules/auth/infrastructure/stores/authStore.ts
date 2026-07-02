@@ -102,8 +102,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   logout: async () => {
-    await supabase.auth.signOut()
+    // Limpiamos el estado primero (síncrono) para que cualquier redirect a
+    // /login vea user=null de inmediato y no rebote de vuelta al mapa.
     set({ user: null })
+    await supabase.auth.signOut()
   },
 }))
 
