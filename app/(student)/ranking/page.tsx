@@ -2,13 +2,13 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Target, Users, AlertTriangle, RefreshCw } from 'lucide-react'
+import { ChevronLeft, Target, Users, AlertTriangle, RefreshCw, Trophy } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
 
 type SchoolRanking = {
   id: string
-  pos: number
+  pos: number | null   // null = aún sin puntos → sin puesto asignado
   name: string
   short: string
   points: number
@@ -34,7 +34,7 @@ function Tooltip({ text, align = 'center' }: { text: string; align?: 'left' | 'c
 
 function SchoolRow({ school, isMe, topXp }: { school: SchoolRanking; isMe: boolean; topXp: number }) {
   const pct = topXp > 0 ? (school.points / topXp) * 100 : 0
-  const medal = school.pos <= 3 ? MEDAL[school.pos as 1 | 2 | 3] : null
+  const medal = school.pos !== null && school.pos <= 3 ? MEDAL[school.pos as 1 | 2 | 3] : null
 
   return (
     <div className="glass-panel hud-scanline rounded-2xl px-4 py-3"
@@ -45,7 +45,7 @@ function SchoolRow({ school, isMe, topXp }: { school: SchoolRanking; isMe: boole
       <div className="flex items-center gap-3">
         <span className="text-base font-black w-7 text-center shrink-0"
           style={{ color: medal ? medal.color : 'rgba(255,255,255,0.25)' }}>
-          {medal ? medal.emoji : school.pos}
+          {medal ? medal.emoji : (school.pos ?? '—')}
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -104,10 +104,12 @@ export default function RankingPage() {
     )
   }
 
-  // Mapea la entidad de dominio a la forma que consume esta vista
+  // Mapea la entidad de dominio a la forma que consume esta vista.
+  // El puesto se asigna SOLO a colegios con puntos > 0 (los demás quedan sin puesto).
+  let rank = 0
   const schools: SchoolRanking[] = rankingData.map(s => ({
     id: s.id,
-    pos: s.rankingPosition,
+    pos: s.points > 0 ? ++rank : null,
     name: s.name,
     short: s.short,
     points: s.points,
@@ -118,10 +120,20 @@ export default function RankingPage() {
     ? 'No pudimos conectar con la red de Guardianes. Verifica tu conexión e intenta nuevamente.'
     : null
 
-  const myPos = schools.find(s => s.id === user.schoolId)?.pos ?? 0
+  const hasStarted    = schools.some(s => s.pos !== null)   // ¿ya puntuó alguien?
+  const rankedSchools = schools.filter(s => s.pos !== null)
+  const hasSchool     = user.schoolId != null               // el admin no tiene colegio
+  const myPos = hasSchool ? (schools.find(s => s.id === user.schoolId)?.pos ?? null) : null
   const topXp = schools.length > 0 ? schools[0].points : 0
   const totalMissions = schools.reduce((a, s) => a + s.missions, 0)
-  const top3 = schools.length >= 3 ? [schools[1], schools[0], schools[2]] : []
+  const top3 = rankedSchools.length >= 3 ? [rankedSchools[1], rankedSchools[0], rankedSchools[2]] : []
+
+  const summaryStats: { label: string; value: string | number; color: string }[] = [
+    { label: 'Colegios', value: schools.length, color: '#00f0ff' },
+    { label: 'Misiones completadas', value: totalMissions, color: '#00e676' },
+    { label: 'XP líder', value: hasStarted ? topXp.toLocaleString('es-PE') : '—', color: '#f9bd22' },
+    ...(hasSchool ? [{ label: 'Tu posición', value: myPos != null ? `#${myPos}` : '—', color: '#00f0ff' }] : []),
+  ]
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -150,7 +162,7 @@ export default function RankingPage() {
           </div>
         </div>
 
-        {myPos > 0 && (
+        {hasSchool && myPos != null && (
           <div className="relative group hidden sm:block">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
               style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)' }}>
@@ -166,7 +178,7 @@ export default function RankingPage() {
 
         <div className="lg:w-80 xl:w-96 shrink-0 lg:sticky lg:top-24">
 
-          {top3.length === 3 && (
+          {hasStarted && top3.length === 3 && (
             <>
               <p className="text-xs uppercase tracking-[0.2em] font-bold mb-4 text-center" style={{ color: '#f9bd22' }}>
                 ── Top 3 ──
@@ -195,6 +207,19 @@ export default function RankingPage() {
             </>
           )}
 
+          {!loading && !error && !hasStarted && (
+            <div className="glass-panel hud-scanline rounded-2xl p-5 mb-4 text-center"
+              style={{ border: '1px solid rgba(0,240,255,0.2)' }}>
+              <Trophy className="w-9 h-9 mx-auto mb-2" style={{ color: 'rgba(255,255,255,0.25)' }} />
+              <p className="text-sm font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+                El concurso aún no comienza
+              </p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                Ningún equipo ha puntuado todavía. Cuando completen misiones, aquí aparecerá la clasificación.
+              </p>
+            </div>
+          )}
+
           <div className="glass-panel hud-scanline rounded-2xl p-4 mb-4"
             style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
             <p className="text-[10px] uppercase tracking-widest font-bold mb-3" style={{ color: '#00f0ff' }}>Resumen del evento</p>
@@ -206,12 +231,7 @@ export default function RankingPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Colegios', value: schools.length, color: '#00f0ff' },
-                  { label: 'Misiones completadas', value: totalMissions, color: '#00e676' },
-                  { label: 'XP líder', value: `${topXp.toLocaleString('es-PE')}`, color: '#f9bd22' },
-                  { label: 'Tu posición', value: myPos > 0 ? `#${myPos}` : '-', color: '#00f0ff' },
-                ].map(stat => (
+                {summaryStats.map(stat => (
                   <div key={stat.label} className="rounded-xl p-2.5 text-center"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <p className="text-lg font-black" style={{ color: stat.color }}>{stat.value}</p>
