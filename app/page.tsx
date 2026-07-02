@@ -37,7 +37,7 @@ export default function HomePage() {
   const fragments = chapters.map(c => c.fragment).filter(f => f.icon)
 
   return (
-    <div className="min-h-dvh w-full flex flex-col items-center relative overflow-x-hidden"
+    <div className="min-h-dvh w-full flex flex-col items-center justify-center relative overflow-x-hidden"
       style={{ background: '#0d1117' }}>
 
       {/* Ambient glows */}
@@ -46,106 +46,114 @@ export default function HomePage() {
         <div className="absolute rounded-full" style={{ width: 420, height: 420, bottom: '-10%', right: '-12%', background: 'radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)' }} />
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-6 pt-12 pb-8 flex flex-col items-center gap-8">
+      <div className="relative z-10 w-full max-w-md lg:max-w-5xl px-6 py-12 lg:py-16 flex flex-col gap-10">
 
-        {/* ── Logo + bienvenida ── */}
-        <div className="flex flex-col items-center text-center gap-4">
-          <div style={{ filter: 'drop-shadow(0 0 32px rgba(0,168,255,0.45)) drop-shadow(0 8px 24px rgba(0,0,0,0.5))' }}>
-            <Image src="/images/logo_principal.png" alt="La Búsqueda de los Guardianes de Arequipa"
-              width={170} height={170} priority loading="eager" className="object-contain" style={{ width: 170, height: 'auto' }} />
-          </div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#00f0ff' }}>
-            Concurso inter-escolar
-          </p>
-          <h1 className="text-lg font-black leading-tight text-white" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
-            Arequipa necesita a sus Guardianes.
-            <span style={{ color: '#f9bd22' }}> ¿Aceptas la búsqueda?</span>
-          </h1>
-          <p className="text-sm" style={{ fontFamily: 'var(--font-inter), sans-serif', color: 'rgba(255,255,255,0.45)' }}>
-            Recorre la Ciudad Blanca con tu equipo, resuelve misiones en lugares reales y lleva a tu colegio a lo más alto.
-          </p>
-        </div>
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:gap-14 lg:items-center">
 
-        {/* ── Stats en vivo ── */}
-        <div className="grid grid-cols-3 gap-2.5 w-full">
-          {stats.map(s => (
-            <div key={s.label} className="glass-panel hud-scanline rounded-2xl py-3 flex flex-col items-center gap-1"
-              style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-              <s.icon className="w-4 h-4" style={{ color: s.color }} />
-              <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>{s.value}</span>
-              <span className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</span>
+          {/* ── Hero (logo + bienvenida + stats + CTAs) ── */}
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-6">
+            <div style={{ filter: 'drop-shadow(0 0 32px rgba(0,168,255,0.45)) drop-shadow(0 8px 24px rgba(0,0,0,0.5))' }}>
+              <Image src="/images/logo_principal.png" alt="La Búsqueda de los Guardianes de Arequipa"
+                width={170} height={170} priority loading="eager" className="object-contain" style={{ width: 170, height: 'auto' }} />
             </div>
-          ))}
-        </div>
 
-        {/* ── CTAs ── */}
-        <div className="w-full flex flex-col gap-3">
-          <button
-            onClick={() => router.push(isLogged ? '/mapa' : '/login')}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white transition-all active:scale-[0.98] active:translate-y-0.5"
-            style={{
-              fontFamily: 'var(--font-exo2), sans-serif',
-              background: 'linear-gradient(to bottom, #00d2ff, #00a8ff)',
-              boxShadow: '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25), 0 0 20px rgba(0,168,255,0.4)',
-              border: '1.5px solid rgba(255,255,255,0.25)',
-            }}>
-            {isLogged ? <><ArrowRight className="w-4 h-4" /> Continuar</> : <><LogIn className="w-4 h-4" /> Iniciar sesión</>}
-          </button>
-
-          <button
-            onClick={() => router.push('/tablero-vivo')}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all active:scale-[0.98] active:translate-y-0.5"
-            style={{
-              fontFamily: 'var(--font-exo2), sans-serif',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1.5px solid rgba(249,189,34,0.35)',
-              color: '#f9bd22',
-            }}>
-            <Trophy className="w-4 h-4" /> Ver tablero en vivo
-          </button>
-        </div>
-
-        {/* ── Cómo funciona ── */}
-        <div className="w-full flex flex-col gap-3">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-center" style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-exo2), sans-serif' }}>
-            Cómo funciona
-          </p>
-          {STEPS.map((step, i) => (
-            <div key={step.title} className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3"
-              style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 relative"
-                style={{ background: 'rgba(0,168,255,0.1)', border: '1px solid rgba(0,168,255,0.25)' }}>
-                <step.icon className="w-4 h-4" style={{ color: '#00a8ff' }} />
-                <span className="absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white"
-                  style={{ background: '#00a8ff' }}>{i + 1}</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-white">{step.title}</p>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{step.desc}</p>
-              </div>
+            <div className="flex flex-col items-center lg:items-start gap-3">
+              <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#00f0ff' }}>
+                Concurso inter-escolar
+              </p>
+              <h1 className="text-lg lg:text-2xl font-black leading-tight text-white" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+                Arequipa necesita a sus Guardianes.
+                <span style={{ color: '#f9bd22' }}> ¿Aceptas la búsqueda?</span>
+              </h1>
+              <p className="text-sm lg:text-base max-w-md" style={{ fontFamily: 'var(--font-inter), sans-serif', color: 'rgba(255,255,255,0.45)' }}>
+                Recorre la Ciudad Blanca con tu equipo, resuelve misiones en lugares reales y lleva a tu colegio a lo más alto.
+              </p>
             </div>
-          ))}
-        </div>
 
-        {/* ── Teaser de fragmentos ── */}
-        {fragments.length > 0 && (
-          <div className="w-full flex flex-col items-center gap-3">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-center" style={{ color: '#f9bd22', fontFamily: 'var(--font-exo2), sans-serif' }}>
-              Colecciona los 5 Fragmentos
-            </p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              {fragments.map(f => (
-                <div key={f.id} className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <Image src={f.icon} alt={f.name} width={34} height={34} className="object-contain opacity-80" style={{ width: 34, height: 34 }} />
+            {/* Stats en vivo */}
+            <div className="grid grid-cols-3 gap-2.5 w-full max-w-sm lg:max-w-none">
+              {stats.map(s => (
+                <div key={s.label} className="glass-panel hud-scanline rounded-2xl py-3 flex flex-col items-center gap-1"
+                  style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <s.icon className="w-4 h-4" style={{ color: s.color }} />
+                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>{s.value}</span>
+                  <span className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</span>
                 </div>
               ))}
             </div>
+
+            {/* CTAs */}
+            <div className="w-full max-w-sm lg:max-w-none flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => router.push(isLogged ? '/mapa' : '/login')}
+                className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white transition-all active:scale-[0.98] active:translate-y-0.5"
+                style={{
+                  fontFamily: 'var(--font-exo2), sans-serif',
+                  background: 'linear-gradient(to bottom, #00d2ff, #00a8ff)',
+                  boxShadow: '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25), 0 0 20px rgba(0,168,255,0.4)',
+                  border: '1.5px solid rgba(255,255,255,0.25)',
+                }}>
+                {isLogged ? <><ArrowRight className="w-4 h-4" /> Continuar</> : <><LogIn className="w-4 h-4" /> Iniciar sesión</>}
+              </button>
+
+              <button
+                onClick={() => router.push('/tablero-vivo')}
+                className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all active:scale-[0.98] active:translate-y-0.5"
+                style={{
+                  fontFamily: 'var(--font-exo2), sans-serif',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1.5px solid rgba(249,189,34,0.35)',
+                  color: '#f9bd22',
+                }}>
+                <Trophy className="w-4 h-4" /> Tablero en vivo
+              </button>
+            </div>
           </div>
-        )}
+
+          {/* ── Info (cómo funciona + fragmentos) ── */}
+          <div className="flex flex-col gap-6 w-full">
+            <div className="flex flex-col gap-3">
+              <p className="text-[10px] uppercase tracking-widest font-bold text-center lg:text-left" style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-exo2), sans-serif' }}>
+                Cómo funciona
+              </p>
+              {STEPS.map((step, i) => (
+                <div key={step.title} className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3"
+                  style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 relative"
+                    style={{ background: 'rgba(0,168,255,0.1)', border: '1px solid rgba(0,168,255,0.25)' }}>
+                    <step.icon className="w-4 h-4" style={{ color: '#00a8ff' }} />
+                    <span className="absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                      style={{ background: '#00a8ff' }}>{i + 1}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white">{step.title}</p>
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {fragments.length > 0 && (
+              <div className="glass-panel rounded-2xl px-4 py-4 flex flex-col items-center gap-3"
+                style={{ border: '1px solid rgba(249,189,34,0.2)' }}>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-center" style={{ color: '#f9bd22', fontFamily: 'var(--font-exo2), sans-serif' }}>
+                  Colecciona los 5 Fragmentos
+                </p>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  {fragments.map(f => (
+                    <div key={f.id} className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <Image src={f.icon} alt={f.name} width={34} height={34} className="object-contain opacity-80" style={{ width: 34, height: 34 }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* ── Patrocinadores ── */}
-        <div className="flex flex-col items-center gap-2 mt-2">
+        <div className="flex flex-col items-center gap-2">
           <span className="uppercase tracking-widest opacity-40" style={{ fontFamily: 'var(--font-exo2), sans-serif', fontSize: 9, letterSpacing: '0.12em', color: 'var(--color-on-surface-var)' }}>
             Powered by
           </span>
