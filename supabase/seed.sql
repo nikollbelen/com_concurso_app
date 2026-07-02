@@ -24,51 +24,51 @@ INSERT INTO public.fragments (id, name, icon) VALUES
   ('f5555555-5555-5555-5555-555555555555', 'Fragmento de la Cultura', '/images/capitulo5.png');
 
 -- 3. CREACIÓN DE CAPÍTULOS
-INSERT INTO public.chapters (id, title, number, id_fragment, required_level, total_missions, color) VALUES 
-  ('c1111111-1111-1111-1111-111111111111', 'El Secreto del Sillar', 1, 'f1111111-1111-1111-1111-111111111111', 1, 5, '#E2E8F0'),
-  ('c2222222-2222-2222-2222-222222222222', 'Las Huellas del Misti', 2, 'f2222222-2222-2222-2222-222222222222', 2, 4, '#94A3B8'),
-  ('c3333333-3333-3333-3333-333333333333', 'El Legado del Chili', 3, 'f3333333-3333-3333-3333-333333333333', 3, 4, '#38BDF8'),
-  ('c4444444-4444-4444-4444-444444444444', 'Ecos de la Historia', 4, 'f4444444-4444-4444-4444-444444444444', 4, 5, '#F59E0B'),
-  ('c5555555-5555-5555-5555-555555555555', 'El Espíritu de la Ciudad Blanca', 5, 'f5555555-5555-5555-5555-555555555555', 5, 5, '#10B981');
+INSERT INTO public.chapters (id, title, subtitle, number, id_fragment, required_level, total_missions, color) VALUES
+  ('c1111111-1111-1111-1111-111111111111', 'El Secreto del Sillar', 'Descubre el alma de la Ciudad Blanca', 1, 'f1111111-1111-1111-1111-111111111111', 1, 5, '#F59E0B'),
+  ('c2222222-2222-2222-2222-222222222222', 'Las Huellas del Misti', 'Comprende el poder del volcán guardián', 2, 'f2222222-2222-2222-2222-222222222222', 2, 5, '#EF4444'),
+  ('c3333333-3333-3333-3333-333333333333', 'El Legado del Chili', 'Descubre cómo el río forjó la ciudad', 3, 'f3333333-3333-3333-3333-333333333333', 3, 4, '#3B82F6'),
+  ('c4444444-4444-4444-4444-444444444444', 'Ecos de la Historia', 'Conoce a los forjadores de Arequipa', 4, 'f4444444-4444-4444-4444-444444444444', 4, 5, '#8B5CF6'),
+  ('c5555555-5555-5555-5555-555555555555', 'El Espíritu de la Ciudad Blanca', 'Descubre las tradiciones vivas de Arequipa', 5, 'f5555555-5555-5555-5555-555555555555', 5, 5, '#10B981');
 
 -- =================================================================================
 -- 4. MISIONES OFICIALES EXTRAÍDAS DEL DOCUMENTO DE PROPUESTA (24 Misiones)
 -- =================================================================================
-INSERT INTO public.missions (id, id_chapter, points, type, location, question, options, correct_answer) VALUES 
+INSERT INTO public.missions (id, id_chapter, points, type, location, coordinates, question, options, correct_answer) VALUES
 
   -- Capítulo I: El Secreto del Sillar ('c1111111...')
-  ('81111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Plaza de Armas', '¿Cuántos arcos tiene una de las galerías principales de la Plaza de Armas?', '[{"label": "A", "text": "8 arcos"}, {"label": "B", "text": "10 arcos"}, {"label": "C", "text": "12 arcos"}, {"label": "D", "text": "14 arcos"}]'::json, 'C'),
-  ('81111111-1111-1111-1111-111111111112', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Catedral', '¿Cómo se llama el material de construcción, de color blanco y origen volcánico, que da nombre a Arequipa como "Ciudad Blanca" y que se usó para construir la Catedral?', '[{"label": "A", "text": "Granito"}, {"label": "B", "text": "Sillar"}, {"label": "C", "text": "Adobe"}, {"label": "D", "text": "Mármol"}]'::json, 'B'),
-  ('81111111-1111-1111-1111-111111111113', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Claustros de la Compañía', 'Los tallados en piedra de los claustros de la Compañía combinan elementos europeos con motivos de la flora y fauna andina. ¿A qué estilo arquitectónico corresponden estos tallados?', '[{"label": "A", "text": "Barroco mestizo o andino"}, {"label": "B", "text": "Gótico"}, {"label": "C", "text": "Art Decó"}, {"label": "D", "text": "Moderno"}]'::json, 'A'),
-  ('81111111-1111-1111-1111-111111111114', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Iglesia de la Compañía', 'La fachada de la Iglesia de la Compañía es uno de los ejemplos más representativos del arte colonial arequipeño. ¿En qué material está tallada su portada principal?', '[{"label": "A", "text": "Madera"}, {"label": "B", "text": "Sillar"}, {"label": "C", "text": "Bronce"}, {"label": "D", "text": "Yeso"}]'::json, 'B'),
-  ('81111111-1111-1111-1111-111111111115', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Casa del Moral', 'La Casa del Moral debe su nombre a un elemento que crece en su patio principal desde hace cerca de 300 años. ¿Qué elemento es?', '[{"label": "A", "text": "Una fuente de agua"}, {"label": "B", "text": "Un árbol de mora"}, {"label": "C", "text": "Un reloj de sol"}, {"label": "D", "text": "Una estatua de piedra"}]'::json, 'B'),
+  ('81111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Plaza de Armas', '[-71.5369, -16.3989]', '¿Cuántos arcos tiene una de las galerías principales de la Plaza de Armas?', '[{"label": "A", "text": "8 arcos"}, {"label": "B", "text": "10 arcos"}, {"label": "C", "text": "12 arcos"}, {"label": "D", "text": "14 arcos"}]'::json, 'C'),
+  ('81111111-1111-1111-1111-111111111112', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Catedral de Arequipa', '[-71.5370, -16.3995]', '¿Cómo se llama el material de construcción, de color blanco y origen volcánico, que da nombre a Arequipa como ''Ciudad Blanca''?', '[{"label": "A", "text": "Granito"}, {"label": "B", "text": "Sillar"}, {"label": "C", "text": "Adobe"}, {"label": "D", "text": "Mármol"}]'::json, 'B'),
+  ('81111111-1111-1111-1111-111111111113', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Claustros de la Compañía', '[-71.5357, -16.3997]', 'Los tallados en piedra de los claustros de la Compañía combinan elementos europeos con motivos andinos. ¿A qué estilo corresponden?', '[{"label": "A", "text": "Barroco mestizo o andino"}, {"label": "B", "text": "Gótico"}, {"label": "C", "text": "Art Decó"}, {"label": "D", "text": "Moderno"}]'::json, 'A'),
+  ('81111111-1111-1111-1111-111111111114', 'c1111111-1111-1111-1111-111111111111', 10, 'trivia', 'Iglesia de la Compañía', '[-71.5362, -16.3993]', 'La fachada de la Iglesia de la Compañía es uno de los ejemplos más representativos del arte colonial arequipeño. ¿En qué material está tallada su portada principal?', '[{"label": "A", "text": "Madera"}, {"label": "B", "text": "Sillar"}, {"label": "C", "text": "Bronce"}, {"label": "D", "text": "Yeso"}]'::json, 'B'),
+  ('81111111-1111-1111-1111-111111111115', 'c1111111-1111-1111-1111-111111111111', 15, 'photo', 'Casa del Moral', '[-71.5382, -16.3979]', 'La Casa del Moral debe su nombre a un elemento que crece en su patio principal desde hace cerca de 300 años. ¿Qué elemento es?', '[{"label": "A", "text": "Una fuente de agua"}, {"label": "B", "text": "Un árbol de mora"}, {"label": "C", "text": "Un reloj de sol"}, {"label": "D", "text": "Una estatua de piedra"}]'::json, 'B'),
 
   -- Capítulo II: Las Huellas del Misti ('c2222222...')
-  ('82222222-2222-2222-2222-222222222221', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Mirador de Yanahuara', 'Los arcos del mirador de Yanahuara tienen frases grabadas. ¿Qué tipo de frases son las que suelen encontrarse grabadas en estos arcos?', '[{"label": "A", "text": "Frases de poetas y escritores arequipeños"}, {"label": "B", "text": "Horarios de buses"}, {"label": "C", "text": "Nombres de empresas"}, {"label": "D", "text": "Recetas de cocina"}]'::json, 'A'),
-  ('82222222-2222-2222-2222-222222222222', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Mirador de Carmen Alto', 'Desde el mirador de Carmen Alto se observan los andenes (terrazas agrícolas) además del volcán Misti. ¿Qué cultivo es tradicionalmente asociado a estos andenes en Arequipa?', '[{"label": "A", "text": "Café"}, {"label": "B", "text": "Arroz"}, {"label": "C", "text": "Hortalizas y alfalfa"}, {"label": "D", "text": "Cacao"}]'::json, 'C'),
-  ('82222222-2222-2222-2222-222222222223', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Plaza de Yanahuara', 'La iglesia principal de la Plaza de Yanahuara está construida, igual que gran parte del centro histórico, en:', '[{"label": "A", "text": "Ladrillo"}, {"label": "B", "text": "Sillar"}, {"label": "C", "text": "Concreto armado"}, {"label": "D", "text": "Adobe sin tallar"}]'::json, 'B'),
-  ('82222222-2222-2222-2222-222222222224', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Museo Santuarios Andinos', 'El Museo Santuarios Andinos resguarda a "Juanita", una momia inca hallada en la cima de un volcán cercano a Arequipa. ¿En qué volcán fue encontrada?', '[{"label": "A", "text": "Misti"}, {"label": "B", "text": "Ampato"}, {"label": "C", "text": "Chachani"}, {"label": "D", "text": "Pichu Pichu"}]'::json, 'B'),
+  ('82222222-2222-2222-2222-222222222221', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Mirador de Yanahuara', '[-71.5497, -16.3939]', 'Los arcos del mirador de Yanahuara tienen frases grabadas. ¿Qué tipo de frases son las que suelen encontrarse grabadas en estos arcos?', '[{"label": "A", "text": "Frases de poetas y escritores arequipeños"}, {"label": "B", "text": "Horarios de buses"}, {"label": "C", "text": "Nombres de empresas"}, {"label": "D", "text": "Recetas de cocina"}]'::json, 'A'),
+  ('82222222-2222-2222-2222-222222222222', 'c2222222-2222-2222-2222-222222222222', 15, 'photo', 'Mirador de Carmen Alto', '[-71.5369, -16.3739]', 'Desde el mirador de Carmen Alto se observan los andenes además del volcán Misti. ¿Qué cultivo es tradicionalmente asociado a estos andenes en Arequipa?', '[{"label": "A", "text": "Café"}, {"label": "B", "text": "Arroz"}, {"label": "C", "text": "Hortalizas y alfalfa"}, {"label": "D", "text": "Cacao"}]'::json, 'C'),
+  ('82222222-2222-2222-2222-222222222223', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Plaza de Yanahuara', '[-71.5498, -16.3934]', 'La iglesia principal de la Plaza de Yanahuara está construida, igual que gran parte del centro histórico, en:', '[{"label": "A", "text": "Ladrillo"}, {"label": "B", "text": "Sillar"}, {"label": "C", "text": "Concreto armado"}, {"label": "D", "text": "Adobe sin tallar"}]'::json, 'B'),
+  ('82222222-2222-2222-2222-222222222224', 'c2222222-2222-2222-2222-222222222222', 10, 'trivia', 'Museo Santuarios Andinos', '[-71.5349, -16.4000]', 'El Museo Santuarios Andinos resguarda a ''Juanita'', una momia inca hallada en la cima de un volcán cercano a Arequipa. ¿En qué volcán fue encontrada?', '[{"label": "A", "text": "Misti"}, {"label": "B", "text": "Ampato"}, {"label": "C", "text": "Chachani"}, {"label": "D", "text": "Pichu Pichu"}]'::json, 'B'),
+  ('82222222-2222-2222-2222-222222222225', 'c2222222-2222-2222-2222-222222222222', 15, 'photo', 'Parque Selva Alegre', '[-71.5320, -16.3883]', 'Desde puntos elevados del Parque Selva Alegre se puede observar el paisaje volcánico. Además del Misti, ¿qué otro volcán suele ser visible desde puntos altos de la ciudad?', '[{"label": "A", "text": "Chachani"}, {"label": "B", "text": "Huascarán"}, {"label": "C", "text": "Coropuna"}, {"label": "D", "text": "Salcantay"}]'::json, 'A'),
 
   -- Capítulo III: El Legado del Chili ('c3333333...')
-  ('83333333-3333-3333-3333-333333333331', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Puente Bolognesi', 'El Puente Bolognesi cruza el río Chili y conecta el centro histórico con el distrito de Yanahuara. ¿Qué río cruza este puente?', '[{"label": "A", "text": "Río Chili"}, {"label": "B", "text": "Río Tambo"}, {"label": "C", "text": "Río Majes"}, {"label": "D", "text": "Río Sihuas"}]'::json, 'A'),
-  ('83333333-3333-3333-3333-333333333332', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Puente Grau', 'Al igual que el Puente Bolognesi, el Puente Grau es una de las vías que conecta ambas riberas del centro de Arequipa. ¿Sobre qué río se ubica?', '[{"label": "A", "text": "Río Chili"}, {"label": "B", "text": "Río Vítor"}, {"label": "C", "text": "Río Yura"}, {"label": "D", "text": "Río Andaray"}]'::json, 'A'),
-  ('83333333-3333-3333-3333-333333333333', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Río Chili', '¿Cuál fue uno de los usos históricos más importantes del río Chili para el desarrollo de la ciudad de Arequipa?', '[{"label": "A", "text": "Transporte de mercancía en barcos grandes"}, {"label": "B", "text": "Abastecimiento de agua para consumo, riego y energía de molinos"}, {"label": "C", "text": "Generación de electricidad mediante represas modernas únicamente"}, {"label": "D", "text": "Ninguno, el río no tuvo relevancia histórica"}]'::json, 'B'),
-  ('83333333-3333-3333-3333-333333333334', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Molino de Sabandía', 'En el Molino de Sabandía, ¿qué elemento del río se utilizaba para mover la maquinaria que molía el grano?', '[{"label": "A", "text": "El viento que soplaba cerca del río"}, {"label": "B", "text": "La fuerza de la corriente de agua sobre una rueda hidráulica"}, {"label": "C", "text": "Animales de carga conectados al molino"}, {"label": "D", "text": "Energía solar mediante espejos"}]'::json, 'B'),
-  ('83333333-3333-3333-3333-333333333335', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Tingo', 'En la zona de Tingo, el agua proveniente del río Chili se ha usado tradicionalmente para:', '[{"label": "A", "text": "Riego de cultivos y agricultura tradicional"}, {"label": "B", "text": "Producción industrial de cemento"}, {"label": "C", "text": "Únicamente actividades recreativas"}, {"label": "D", "text": "Generación de energía nuclear"}]'::json, 'A'),
+  ('83333333-3333-3333-3333-333333333331', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Puente Bolognesi', '[-71.5416, -16.3975]', 'El Puente Bolognesi cruza el río Chili y conecta el centro histórico con el distrito de Yanahuara. ¿Qué río cruza este puente?', '[{"label": "A", "text": "Río Chili"}, {"label": "B", "text": "Río Tambo"}, {"label": "C", "text": "Río Majes"}, {"label": "D", "text": "Río Sihuas"}]'::json, 'A'),
+  ('83333333-3333-3333-3333-333333333332', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Puente Grau', '[-71.5369, -16.4027]', 'Al igual que el Puente Bolognesi, el Puente Grau es una de las vías que conecta ambas riberas del centro de Arequipa. ¿Sobre qué río se ubica?', '[{"label": "A", "text": "Río Chili"}, {"label": "B", "text": "Río Vítor"}, {"label": "C", "text": "Río Yura"}, {"label": "D", "text": "Río Andaray"}]'::json, 'A'),
+  ('83333333-3333-3333-3333-333333333333', 'c3333333-3333-3333-3333-333333333333', 10, 'trivia', 'Río Chili', '[-71.5430, -16.3975]', '¿Cuál fue uno de los usos históricos más importantes del río Chili para el desarrollo de la ciudad de Arequipa?', '[{"label": "A", "text": "Transporte de mercancía en barcos grandes"}, {"label": "B", "text": "Abastecimiento de agua para consumo, riego y energía de molinos"}, {"label": "C", "text": "Generación de electricidad mediante represas modernas únicamente"}, {"label": "D", "text": "Ninguno, el río no tuvo relevancia histórica"}]'::json, 'B'),
+  ('83333333-3333-3333-3333-333333333334', 'c3333333-3333-3333-3333-333333333333', 15, 'photo', 'Molino de Sabandía', '[-71.4872, -16.4631]', 'En el Molino de Sabandía, ¿qué elemento del río se utilizaba para mover la maquinaria que molía el grano?', '[{"label": "A", "text": "El viento que soplaba cerca del río"}, {"label": "B", "text": "La fuerza de la corriente de agua sobre una rueda hidráulica"}, {"label": "C", "text": "Animales de carga conectados al molino"}, {"label": "D", "text": "Energía solar mediante espejos"}]'::json, 'B'),
 
   -- Capítulo IV: Ecos de la Historia ('c4444444...')
-  ('84444444-4444-4444-4444-444444444441', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Casa Museo Mario Vargas Llosa', 'La Casa Museo Mario Vargas Llosa, ubicada en la Avenida Parra, está dedicada al escritor arequipeño ganador del Premio Nobel de Literatura en el año:', '[{"label": "A", "text": "2005"}, {"label": "B", "text": "2010"}, {"label": "C", "text": "2015"}, {"label": "D", "text": "2020"}]'::json, 'B'),
-  ('84444444-4444-4444-4444-444444444442', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Museo Histórico Municipal', 'El Museo Histórico Municipal de Arequipa exhibe objetos y documentos relacionados principalmente con:', '[{"label": "A", "text": "La historia y los personajes de Arequipa"}, {"label": "B", "text": "La gastronomía internacional"}, {"label": "C", "text": "La tecnología moderna"}, {"label": "D", "text": "El deporte mundial"}]'::json, 'A'),
-  ('84444444-4444-4444-4444-444444444443', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Plaza San Francisco', 'La Plaza San Francisco se encuentra junto al conjunto religioso del mismo nombre, vinculado a la orden:', '[{"label": "A", "text": "Franciscana"}, {"label": "B", "text": "Jesuita"}, {"label": "C", "text": "Dominica"}, {"label": "D", "text": "Benedictina"}]'::json, 'A'),
-  ('84444444-4444-4444-4444-444444444444', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Teatro Municipal', 'El Teatro Municipal de Arequipa es uno de los espacios culturales más antiguos de la ciudad y se utiliza principalmente para:', '[{"label": "A", "text": "Presentaciones artísticas y culturales (teatro, música, danza)"}, {"label": "B", "text": "Eventos deportivos de gran aforo"}, {"label": "C", "text": "Exposiciones de maquinaria industrial"}, {"label": "D", "text": "Ferias de comida exclusivamente"}]'::json, 'A'),
-  ('84444444-4444-4444-4444-444444444445', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Barrio Tradicional', 'Al recorrer un barrio tradicional del centro histórico de Arequipa, ¿qué elemento es característico de su arquitectura y evidencia su origen colonial?', '[{"label": "A", "text": "Calles empedradas y fachadas de sillar"}, {"label": "B", "text": "Edificios de vidrio y acero"}, {"label": "C", "text": "Avenidas de seis carriles"}, {"label": "D", "text": "Centros comerciales modernos"}]'::json, 'A'),
+  ('84444444-4444-4444-4444-444444444441', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Casa Museo Mario Vargas Llosa', '[-71.5406, -16.4038]', 'La Casa Museo Mario Vargas Llosa está dedicada al escritor arequipeño ganador del Premio Nobel de Literatura en el año:', '[{"label": "A", "text": "2005"}, {"label": "B", "text": "2010"}, {"label": "C", "text": "2015"}, {"label": "D", "text": "2020"}]'::json, 'B'),
+  ('84444444-4444-4444-4444-444444444442', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Museo Histórico Municipal', '[-71.5370, -16.3994]', 'El Museo Histórico Municipal de Arequipa exhibe objetos y documentos relacionados principalmente con:', '[{"label": "A", "text": "La historia y los personajes de Arequipa"}, {"label": "B", "text": "La gastronomía internacional"}, {"label": "C", "text": "La tecnología moderna"}, {"label": "D", "text": "El deporte mundial"}]'::json, 'A'),
+  ('84444444-4444-4444-4444-444444444443', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Plaza San Francisco', '[-71.5331, -16.4008]', 'La Plaza San Francisco se encuentra junto al conjunto religioso del mismo nombre, vinculado a la orden:', '[{"label": "A", "text": "Franciscana"}, {"label": "B", "text": "Jesuita"}, {"label": "C", "text": "Dominica"}, {"label": "D", "text": "Benedictina"}]'::json, 'A'),
+  ('84444444-4444-4444-4444-444444444444', 'c4444444-4444-4444-4444-444444444444', 10, 'trivia', 'Teatro Municipal', '[-71.5351, -16.3986]', 'El Teatro Municipal de Arequipa es uno de los espacios culturales más antiguos de la ciudad y se utiliza principalmente para:', '[{"label": "A", "text": "Presentaciones artísticas y culturales (teatro, música, danza)"}, {"label": "B", "text": "Eventos deportivos de gran aforo"}, {"label": "C", "text": "Exposiciones de maquinaria industrial"}, {"label": "D", "text": "Ferias de comida exclusivamente"}]'::json, 'A'),
+  ('84444444-4444-4444-4444-444444444445', 'c4444444-4444-4444-4444-444444444444', 15, 'photo', 'Barrio Tradicional', '[-71.5346, -16.3968]', 'Al recorrer un barrio tradicional del centro histórico de Arequipa, ¿qué elemento es característico de su arquitectura y evidencia su origen colonial?', '[{"label": "A", "text": "Calles empedradas y fachadas de sillar"}, {"label": "B", "text": "Edificios de vidrio y acero"}, {"label": "C", "text": "Avenidas de seis carriles"}, {"label": "D", "text": "Centros comerciales modernos"}]'::json, 'A'),
 
   -- Capítulo V: El Espíritu de la Ciudad Blanca ('c5555555...')
-  ('85555555-5555-5555-5555-555555555551', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Mercado San Camilo', 'El Mercado San Camilo es uno de los mercados tradicionales más representativos de Arequipa. ¿Qué tipo de productos es típico encontrar en sus puestos?', '[{"label": "A", "text": "Productos agrícolas, quesos y ajíes típicos de la región"}, {"label": "B", "text": "Únicamente ropa importada"}, {"label": "C", "text": "Solo productos electrónicos"}, {"label": "D", "text": "Solo artesanías de otros países"}]'::json, 'A'),
-  ('85555555-5555-5555-5555-555555555552', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Centro Cultural', 'Los centros culturales de Arequipa suelen exhibir y promover expresiones artísticas como:', '[{"label": "A", "text": "Música, danza y artes plásticas regionales"}, {"label": "B", "text": "Solo cine internacional"}, {"label": "C", "text": "Únicamente videojuegos"}, {"label": "D", "text": "Solo moda extranjera"}]'::json, 'A'),
-  ('85555555-5555-5555-5555-555555555553', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Picantería Tradicional', 'Las picanterías tradicionales de Arequipa son reconocidas por servir platos típicos como el rocoto relleno o el chupe de camarones. Estos platos forman parte de:', '[{"label": "A", "text": "La gastronomía tradicional arequipeña"}, {"label": "B", "text": "La comida rápida internacional"}, {"label": "C", "text": "La repostería europea"}, {"label": "D", "text": "La cocina asiática exclusivamente"}]'::json, 'A'),
-  ('85555555-5555-5555-5555-555555555554', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Plaza de Armas (evento especial)', 'En la Plaza de Armas de Arequipa conviven elementos que representan la identidad de la ciudad, como su arquitectura de sillar y sus símbolos históricos. ¿Cuál de los siguientes es uno de esos elementos representativos?', '[{"label": "A", "text": "La arquitectura de sillar de sus edificios históricos"}, {"label": "B", "text": "Rascacielos de vidrio"}, {"label": "C", "text": "Un estadio de fútbol"}, {"label": "D", "text": "Un puerto marítimo"}]'::json, 'A'),
-  ('85555555-5555-5555-5555-555555555555', 'c5555555-5555-5555-5555-555555555555', 15, 'creative', 'Espacio Cultural Designado', 'Este desafío no se valida por opción múltiple: el equipo debe completar una actividad creativa relacionada con las tradiciones de Arequipa frente al docente/líder.', '[{"label": "A", "text": "Actividad creativa completada y evaluada presencialmente"}]'::json, 'A');
+  ('85555555-5555-5555-5555-555555555551', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Mercado San Camilo', '[-71.5359, -16.4035]', 'El Mercado San Camilo es uno de los mercados tradicionales más representativos de Arequipa. ¿Qué tipo de productos es típico encontrar en sus puestos?', '[{"label": "A", "text": "Productos agrícolas, quesos y ajíes típicos de la región"}, {"label": "B", "text": "Únicamente ropa importada"}, {"label": "C", "text": "Solo productos electrónicos"}, {"label": "D", "text": "Solo artesanías de otros países"}]'::json, 'A'),
+  ('85555555-5555-5555-5555-555555555552', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Centro Cultural', '[-71.5355, -16.3985]', 'Los centros culturales de Arequipa suelen exhibir y promover expresiones artísticas como:', '[{"label": "A", "text": "Música, danza y artes plásticas regionales"}, {"label": "B", "text": "Solo cine internacional"}, {"label": "C", "text": "Únicamente videojuegos"}, {"label": "D", "text": "Solo moda extranjera"}]'::json, 'A'),
+  ('85555555-5555-5555-5555-555555555553', 'c5555555-5555-5555-5555-555555555555', 15, 'photo', 'Picantería Tradicional', '[-71.5340, -16.4020]', 'Las picanterías tradicionales de Arequipa son reconocidas por servir platos típicos como el rocoto relleno o el chupe de camarones. Estos platos forman parte de:', '[{"label": "A", "text": "La gastronomía tradicional arequipeña"}, {"label": "B", "text": "La comida rápida internacional"}, {"label": "C", "text": "La repostería europea"}, {"label": "D", "text": "La cocina asiática exclusivamente"}]'::json, 'A'),
+  ('85555555-5555-5555-5555-555555555554', 'c5555555-5555-5555-5555-555555555555', 10, 'trivia', 'Plaza de Armas (evento especial)', '[-71.5369, -16.3984]', 'En la Plaza de Armas de Arequipa conviven elementos que representan la identidad de la ciudad. ¿Cuál de los siguientes es uno de esos elementos representativos?', '[{"label": "A", "text": "La arquitectura de sillar de sus edificios históricos"}, {"label": "B", "text": "Rascacielos de vidrio"}, {"label": "C", "text": "Un estadio de fútbol"}, {"label": "D", "text": "Un puerto marítimo"}]'::json, 'A'),
+  ('85555555-5555-5555-5555-555555555555', 'c5555555-5555-5555-5555-555555555555', 20, 'creative', 'Espacio Cultural Designado', '[-71.5360, -16.4000]', 'El equipo debe completar una actividad creativa relacionada con las tradiciones de Arequipa frente al docente/líder o un evaluador designado.', '[{"label": "A", "text": "Actividad creativa completada y evaluada presencialmente"}]'::json, 'A');
 
 -- =================================================================================
 -- 4.5 CREACIÓN DEL USUARIO ADMINISTRADOR (SUPER ADMIN)
@@ -93,7 +93,32 @@ ON CONFLICT (id) DO UPDATE SET alias = EXCLUDED.alias, nombre = EXCLUDED.nombre,
 
 
 -- =================================================================================
--- 5. GENERACIÓN MASIVA E INTELIGENTE DE ESCUELAS, EQUIPOS Y USUARIOS
+-- 5. LOS 16 COLEGIOS OFICIALES (desde schools.json). Sin color/short en el JSON:
+--    se genera una paleta de 16 colores + abreviaturas. Todos inician en 0 (juego nuevo).
+-- =================================================================================
+INSERT INTO public.schools (id, name, short, color, points, missions_completed) VALUES
+  ('e0000000-0000-0000-0000-000000000001', 'Colegio Independencia Americana', 'Independencia', '#DC2626', 0, 0),
+  ('e0000000-0000-0000-0000-000000000002', 'I.E. Micaela Bastidas',           'Micaela',       '#EA580C', 0, 0),
+  ('e0000000-0000-0000-0000-000000000003', 'I.E. San Francisco',              'San Francisco', '#D97706', 0, 0),
+  ('e0000000-0000-0000-0000-000000000004', 'I.E. La Salle',                   'La Salle',      '#CA8A04', 0, 0),
+  ('e0000000-0000-0000-0000-000000000005', 'I.E. Honorio Delgado',            'Honorio',       '#65A30D', 0, 0),
+  ('e0000000-0000-0000-0000-000000000006', 'I.E. Jorge Basadre Grohmann',     'Basadre',       '#16A34A', 0, 0),
+  ('e0000000-0000-0000-0000-000000000007', 'I.E. Mariano Melgar',             'Melgar',        '#059669', 0, 0),
+  ('e0000000-0000-0000-0000-000000000008', 'I.E. Saúl Cantoral',              'Cantoral',      '#0D9488', 0, 0),
+  ('e0000000-0000-0000-0000-000000000009', 'I.E. Francisco Bolognesi',        'Bolognesi',     '#0891B2', 0, 0),
+  ('e0000000-0000-0000-0000-00000000000a', 'I.E. Daniel Alcides Carrión',     'Carrión',       '#0284C7', 0, 0),
+  ('e0000000-0000-0000-0000-00000000000b', 'I.E. Juan Pablo Vizcardo',        'Vizcardo',      '#2563EB', 0, 0),
+  ('e0000000-0000-0000-0000-00000000000c', 'I.E. Santa María de la Victoria', 'Sta. María',    '#4F46E5', 0, 0),
+  ('e0000000-0000-0000-0000-00000000000d', 'I.E. Nuestra Señora del Pilar',   'Pilar',         '#7C3AED', 0, 0),
+  ('e0000000-0000-0000-0000-00000000000e', 'I.E. Cristo Rey',                 'Cristo Rey',    '#9333EA', 0, 0),
+  ('e0000000-0000-0000-0000-00000000000f', 'I.E. San Juan Bautista',          'San Juan',      '#C026D3', 0, 0),
+  ('e0000000-0000-0000-0000-000000000010', 'I.E. Sagrado Corazón',            'Sagrado C.',    '#DB2777', 0, 0);
+
+-- =================================================================================
+-- 6. GENERACIÓN DE DIRECTORES, EQUIPOS Y USUARIOS (con login estable).
+--    NO crea colegios: engancha los usuarios/equipos existentes a 5 de los 16
+--    colegios de arriba (los primeros 5). Los equipos NO llevan color: heredan
+--    el color de su colegio vía school_id.
 -- =================================================================================
 DO $$
 DECLARE
@@ -103,22 +128,26 @@ DECLARE
   v_dummy_hash text := extensions.crypt('secreto123', extensions.gen_salt('bf'));
   v_nombre text; v_apellido text; v_alias text; v_email text;
   v_school_id uuid; v_team_id bigint; v_leader_id uuid; v_student_id uuid; v_director_id uuid;
-  v_school_names text[] := ARRAY['Colegio Independencia Americana', 'I.E. San Francisco', 'Colegio San José', 'Nuestra Señora del Pilar', 'Colegio La Salle'];
-  v_school_short_names text[] := ARRAY['Independencia', 'San Francisco', 'San José', 'Pilar', 'La Salle'];
-  v_school_colors text[] := ARRAY['#7C3AED', '#DC2626', '#2563EB', '#059669', '#D97706'];
+  -- Se enganchan los equipos/usuarios a los primeros 5 de los 16 colegios ya insertados
+  v_school_ids uuid[] := ARRAY[
+    'e0000000-0000-0000-0000-000000000001',
+    'e0000000-0000-0000-0000-000000000002',
+    'e0000000-0000-0000-0000-000000000003',
+    'e0000000-0000-0000-0000-000000000004',
+    'e0000000-0000-0000-0000-000000000005'
+  ]::uuid[];
   v_nombres text[] := ARRAY['Mateo', 'Lucía', 'Diego', 'Camila', 'Leonardo', 'Valeria', 'Sebastián', 'Sofía', 'Matías', 'Mariana', 'Joaquín', 'Valentina', 'Gabriel', 'Isabella', 'Tomás', 'Antonella', 'Alejandro', 'Daniela', 'Lucas', 'Renata'];
   v_apellidos text[] := ARRAY['Mamani', 'Quispe', 'Condori', 'Flores', 'Rodríguez', 'Huamán', 'Cárdenas', 'Vargas', 'Paredes', 'Mendoza', 'Fernández', 'Cáceres', 'Zúñiga', 'Carpio', 'Málaga', 'Pinto'];
   i int; j int; k int;
 BEGIN
     FOR i IN 1..5 LOOP
-      v_school_id := gen_random_uuid();
-      INSERT INTO public.schools (id, name, short, color, points, missions_completed) VALUES (v_school_id, v_school_names[i], v_school_short_names[i], v_school_colors[i], 0, 0);
+      v_school_id := v_school_ids[i];   -- colegio existente (ya insertado arriba)
 
       -- Director
       v_director_id := gen_random_uuid();
       v_nombre := v_nombres[floor(random() * array_length(v_nombres, 1) + 1)];
       v_apellido := v_apellidos[floor(random() * array_length(v_apellidos, 1) + 1)];
-      v_alias := lower(substring(v_nombre from 1 for 1)) || lower(v_apellido) || '_dir_' || i;
+      v_alias := 'director_' || i;   -- alias fijo y sin tildes (login estable)
       v_email := v_alias || '@guardianes.local'; 
       
       -- ¡Corrección! Campos vacíos y metadata añadidos en el INSERT de auth.users
@@ -133,7 +162,7 @@ BEGIN
         v_leader_id := gen_random_uuid();
         v_nombre := v_nombres[floor(random() * array_length(v_nombres, 1) + 1)];
         v_apellido := v_apellidos[floor(random() * array_length(v_apellidos, 1) + 1)];
-        v_alias := lower(substring(v_nombre from 1 for 1)) || lower(v_apellido) || '_prof_' || i || '_' || j;
+        v_alias := 'lider_' || i || '_' || j;   -- alias fijo y sin tildes (login estable)
         v_email := v_alias || '@guardianes.local'; 
         
         -- ¡Corrección! Campos vacíos y metadata
@@ -151,7 +180,7 @@ BEGIN
           v_student_id := gen_random_uuid();
           v_nombre := v_nombres[floor(random() * array_length(v_nombres, 1) + 1)];
           v_apellido := v_apellidos[floor(random() * array_length(v_apellidos, 1) + 1)];
-          v_alias := lower(substring(v_nombre from 1 for 1)) || lower(v_apellido) || '_' || i || '_' || j || '_' || k;
+          v_alias := 'alumno_' || i || '_' || j || '_' || k;   -- alias fijo y sin tildes (login estable)
           v_email := v_alias || '@guardianes.local'; 
           
           -- ¡Corrección! Campos vacíos y metadata

@@ -29,17 +29,27 @@ Se implementó un seed completo en `supabase/seed.sql` que genera datos de prueb
 
 ### Capítulos (5, uno por fragmento)
 
-Nivel requerido 1-5, con colores y 4-5 misiones cada uno.
+Nivel requerido 1-5, con 4-5 misiones cada uno. Colores y subtítulos tomados de `data/json/chapters.json`:
+
+| # | Color | Misiones |
+|---|---|---|
+| 1 | `#F59E0B` | 5 |
+| 2 | `#EF4444` | 5 |
+| 3 | `#3B82F6` | 4 |
+| 4 | `#8B5CF6` | 5 |
+| 5 | `#10B981` | 5 |
 
 ### Misiones (24 total)
 
-Extraídas del documento de propuesta, cada una con:
-- `type`: trivia (23) + creative (1)
+Sincronizadas con `data/json/missions.json` (incluye coordenadas), cada una con:
+- `type`: trivia (17) + photo (6) + creative (1)
 - `location`: lugar real en Arequipa
+- `coordinates`: par `[lng, lat]` guardado como texto (para el mapa)
 - `question`: texto de la pregunta
 - `options`: JSON array con label y text
 - `correct_answer`: letra de la opción correcta (A, B, C, D)
-- `points`: 10 o 15 pts
+- `points`: 10 (trivia), 15 (photo) o 20 (creative)
+- `marker_image`: vacío por ahora (las misiones aún no tienen imagen)
 
 ### Usuario Admin
 
@@ -48,12 +58,31 @@ Extraídas del documento de propuesta, cada una con:
 - PIN: `secreto123`
 - Rol: admin (sin school ni team)
 
-### Generación masiva (DO $$ block)
+### Colegios (16 oficiales, desde `schools.json`)
 
-5 escuelas, cada una con:
+Los 16 colegios se insertan con UUID fijos (`e0000000-...-0001` … `e0000000-...-0010`).
+Como `schools.json` no trae color ni abreviatura, se genera una **paleta de 16 colores** + `short`.
+Todos inician en `points = 0` y `missions_completed = 0` (el juego arranca de cero).
+Los equipos **no llevan color propio**: heredan el color de su colegio vía `school_id`.
+
+### Generación de usuarios/equipos (DO $$ block)
+
+El bloque **no crea colegios**: engancha los usuarios y equipos a los **primeros 5 de los 16 colegios**.
+Cada uno de esos 5 colegios recibe:
 - 1 director
 - 3 equipos (cada uno con 1 leader/profesor + 5 alumnos)
-- Total: ~96 usuarios + 15 equipos + 5 escuelas
+- Total: **96 usuarios + 15 equipos**, repartidos en 5 colegios (los otros 11 quedan sin equipos, solo en el ranking en 0)
+
+**Alias de login (fijos y sin tildes)** — ver `fix-seed-alias-fijos.md`:
+- `director_<escuela>` (ej. `director_1`)
+- `lider_<escuela>_<equipo>` (ej. `lider_1_2`)
+- `alumno_<escuela>_<equipo>_<n>` (ej. `alumno_1_2_5`)
+- Escuelas 1-5 (con equipos): 1=Independencia · 2=Micaela · 3=San Francisco · 4=La Salle · 5=Honorio
+- Los nombres/apellidos visibles siguen siendo aleatorios; solo el **alias** es determinista.
+
+### Progreso e insignias (vacíos)
+
+`mission_progression`, `insignia` y `team_insignia` se dejan **vacías** a propósito: el juego empieza de cero y las insignias las cargará el equipo organizador.
 
 ### Fixes aplicados
 
