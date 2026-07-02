@@ -173,31 +173,37 @@ export default function HomePage() {
           will-change: transform, opacity;
         }
         .fairy-1 {
-          width: 16px; height: 16px;
-          background: radial-gradient(circle, #ffffff 0%, #8fe8ff 48%, rgba(0,168,255,0) 72%);
-          box-shadow: 0 0 20px 7px rgba(80,210,255,0.75), 0 0 42px 16px rgba(0,168,255,0.42);
-          animation: fairy-path-1 16s ease-in-out infinite, fairy-twinkle 2.6s ease-in-out infinite;
+          width: 9px; height: 9px;
+          background: radial-gradient(circle, #ffffff 0%, #9fecff 38%, rgba(0,168,255,0) 66%);
+          box-shadow: 0 0 24px 9px rgba(120,225,255,0.95), 0 0 52px 20px rgba(0,168,255,0.55);
+          animation: fairy-path-8 17s linear infinite, fairy-twinkle 2.6s ease-in-out infinite;
         }
         .fairy-2 {
-          width: 12px; height: 12px;
-          background: radial-gradient(circle, #fff6d6 0%, #f9bd22 48%, rgba(249,189,34,0) 72%);
-          box-shadow: 0 0 17px 6px rgba(249,189,34,0.7), 0 0 36px 14px rgba(249,189,34,0.35);
-          animation: fairy-path-2 20s ease-in-out infinite, fairy-twinkle 2s ease-in-out infinite;
-          animation-delay: -6s, 0s;
+          width: 7px; height: 7px;
+          background: radial-gradient(circle, #fffefb 0%, #ffd257 38%, rgba(249,189,34,0) 66%);
+          box-shadow: 0 0 22px 8px rgba(255,214,90,0.9), 0 0 46px 18px rgba(249,189,34,0.48);
+          animation: fairy-path-8 23s linear infinite reverse, fairy-twinkle 2s ease-in-out infinite;
+          animation-delay: -9s, 0s;
         }
-        @keyframes fairy-path-1 {
-          0%   { transform: translate(8vw, 72vh); }
-          20%  { transform: translate(26vw, 24vh); }
-          45%  { transform: translate(58vw, 58vh); }
-          68%  { transform: translate(82vw, 18vh); }
-          100% { transform: translate(8vw, 72vh); }
-        }
-        @keyframes fairy-path-2 {
-          0%   { transform: translate(88vw, 30vh); }
-          25%  { transform: translate(62vw, 68vh); }
-          55%  { transform: translate(30vw, 40vh); }
-          80%  { transform: translate(12vw, 78vh); }
-          100% { transform: translate(88vw, 30vh); }
+        /* Figura de 8 (∞) trazada con muchos puntos + timing lineal = curva fluida */
+        @keyframes fairy-path-8 {
+          0%     { transform: translate(50vw, 45vh); }
+          6.25%  { transform: translate(64.5vw, 54.2vh); }
+          12.5%  { transform: translate(76.9vw, 58vh); }
+          18.75% { transform: translate(85.1vw, 54.2vh); }
+          25%    { transform: translate(88vw, 45vh); }
+          31.25% { transform: translate(85.1vw, 35.8vh); }
+          37.5%  { transform: translate(76.9vw, 32vh); }
+          43.75% { transform: translate(64.5vw, 35.8vh); }
+          50%    { transform: translate(50vw, 45vh); }
+          56.25% { transform: translate(35.5vw, 54.2vh); }
+          62.5%  { transform: translate(23.1vw, 58vh); }
+          68.75% { transform: translate(14.9vw, 54.2vh); }
+          75%    { transform: translate(12vw, 45vh); }
+          81.25% { transform: translate(14.9vw, 35.8vh); }
+          87.5%  { transform: translate(23.1vw, 32vh); }
+          93.75% { transform: translate(35.5vw, 35.8vh); }
+          100%   { transform: translate(50vw, 45vh); }
         }
         @keyframes fairy-twinkle {
           0%, 100% { opacity: 0.6; }
