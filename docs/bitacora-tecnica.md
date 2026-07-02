@@ -7,6 +7,43 @@ Los refactors grandes y cambios de arquitectura tienen su propio archivo en `doc
 
 ---
 
+## 2026-07-02 — Página principal, hadas y tablero en vivo
+
+Detalle en `migracion-capa-datos-supabase.md` (sección "Continuación").
+- Nueva landing en `/` (reemplaza el `redirect('/mapa')`): logo, bienvenida, stats en
+  vivo, CTAs (login / tablero), "cómo funciona" y teaser de fragmentos. Responsive
+  (1 columna en móvil, 2 en desktop).
+- Fondo con dos "hadas" que recorren un ∞ (CSS puro, solo `transform`/`opacity`,
+  respeta `prefers-reduced-motion`). Núcleo difuso sin círculo, ~3× de brillo.
+- `/tablero-vivo` pasó de `SCHOOLS_MOCK` a datos reales (`useSchoolRanking`, refresco
+  30s) + botón de volver al inicio.
+
+---
+
+## 2026-07-02 — Fix: cerrar sesión requería dos clics
+
+**Archivo:** `modules/auth/infrastructure/stores/authStore.ts`
+
+**Problema:** al confirmar "Cerrar sesión" volvía a mostrar el mapa; recién al segundo
+intento cerraba. Causa: `logout()` hacía `await signOut()` y solo después
+`set({ user: null })`; como los handlers navegan sin esperar, al llegar a `/login` el
+`user` seguía presente y el efecto `if (user) replace('/mapa')` rebotaba.
+
+**Solución:** limpiar el estado primero (`set({ user: null })`, que es síncrono) y luego
+el `signOut()`. Cierra al primer clic en todas las páginas.
+
+---
+
+## 2026-07-02 — Ranking: sin puesto hasta puntuar + admin sin "Tu posición"
+
+El puesto (`#1`, `#2`…) se asigna solo a colegios con puntos > 0; el resto muestra "—".
+Si nadie puntuó, se oculta el podio y aparece "el concurso aún no comienza". El admin
+(no pertenece a un colegio) ya no ve "Tu posición". Aplica en `getSchoolRanking` y
+`getSchoolsDetail`, por lo que lo respetan `/ranking`, `/admin/panel`, `/director/panel`
+y el bottom sheet del director en el mapa.
+
+---
+
 ## 2026-07-01 — Patrocinadores en el mapa ("Powered by")
 
 **Archivo:** `app/(student)/mapa/page.tsx`
