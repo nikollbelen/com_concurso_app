@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Cinzel_Decorative, Exo_2, Inter } from 'next/font/google'
 import './globals.css'
+import { QueryProvider } from '@/shared/infrastructure/providers/QueryProvider'
 
 /* Cinzel Decorative — RPG headings, level badges, chapter titles */
 const cinzel = Cinzel_Decorative({
@@ -37,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${cinzel.variable} ${exo2.variable} ${inter.variable} h-full`}
     >
       <body className="h-full" style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   )

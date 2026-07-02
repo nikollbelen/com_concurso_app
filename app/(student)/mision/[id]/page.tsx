@@ -8,24 +8,12 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 
-import missionsRaw  from '@/data/json/missions.json'
-import chaptersRaw  from '@/data/json/chapters.json'
-import teamDataRaw  from '@/data/json/teams.json'
+import { useMission }      from '@/modules/missions/presentation/hooks/useMissions'
+import { useChapters }     from '@/modules/chapters/presentation/hooks/useChapters'
+import { useTeam }         from '@/modules/teams/presentation/hooks/useTeam'
+import { useTeamProgress } from '@/modules/missions/presentation/hooks/useTeamProgress'
 
-type MissionType   = 'trivia' | 'photo' | 'creative'
 type MissionStatus = 'available' | 'completed' | 'review' | 'locked'
-
-interface Mission {
-  id: string; chapterId: string; location: string
-  coordinates: [number, number]; type: MissionType
-  points: number; question: string; options: string[]; correctAnswer: number
-}
-interface Chapter { id: string; number: number; title: string; color: string; fragment: { name: string; icon: string } }
-interface TeamData { missionProgress: Record<string, string>; unlockedChapters: string[] }
-
-const missions = missionsRaw as Mission[]
-const chapters = chaptersRaw as Chapter[]
-const teamData = teamDataRaw as TeamData
 
 const TYPE_CFG = {
   trivia:   { icon: <HelpCircle className="w-4 h-4" />, label: 'Trivia',   color: '#38BDF8', desc: 'Responde correctamente la pregunta' },
@@ -45,7 +33,14 @@ function Tooltip({ text }: { text: string }) {
 export default function MisionPage() {
   const router = useRouter()
   const params = useParams()
+  const id = params.id as string
   const { user, isHydrated, hydrate } = useAuthStore()
+
+  /* ─ server state (Supabase vía TanStack Query) ─ */
+  const { data: mission, isLoading: missionLoading } = useMission(id)
+  const { data: chapters = [] } = useChapters()
+  const { data: team }          = useTeam(user?.teamId)
+  const { data: progressData }  = useTeamProgress(user?.teamId)
 
   const [selected,  setSelected]  = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -56,10 +51,16 @@ export default function MisionPage() {
     if (isHydrated && !user) router.replace('/login')
   }, [user, isHydrated, router])
 
-  if (!user) return null
+  if (!isHydrated || !user) return null
 
-  const id      = params.id as string
-  const mission = missions.find(m => m.id === id)
+  if (missionLoading || chapters.length === 0) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
+      <p className="text-sm uppercase tracking-widest" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.3)' }}>
+        Cargando misión…
+      </p>
+    </div>
+  )
+
   if (!mission) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
       <div className="text-center">
@@ -72,9 +73,10 @@ export default function MisionPage() {
   )
 
   const chapter = chapters.find(c => c.id === mission.chapterId)!
-  const progress = teamData.missionProgress[mission.id] as MissionStatus | undefined
-  const isLocked   = !teamData.unlockedChapters.includes(mission.chapterId)
-  const status: MissionStatus = isLocked ? 'locked' : (progress as MissionStatus) ?? 'available'
+  const teamLevel = team?.level ?? user.level ?? 1
+  const isLocked = chapter.requiredLevel > teamLevel
+  const progress = progressData?.[mission.id] as MissionStatus | undefined
+  const status: MissionStatus = isLocked ? 'locked' : progress ?? 'available'
 
   const typeCfg  = TYPE_CFG[mission.type]
   const isCorrect = selected === mission.correctAnswer

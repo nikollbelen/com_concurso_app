@@ -23,10 +23,11 @@ import {
 import { useAuthStore, ROLE_PANEL } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal }              from '@/shared/ui/components/LogoutModal'
 
-import chaptersRaw from '@/data/json/chapters.json'
-import missionsRaw from '@/data/json/missions.json'
-import teamDataRaw from '@/data/json/teams.json'
-import schoolsRaw  from '@/data/json/schools.json'
+import { useChapters }      from '@/modules/chapters/presentation/hooks/useChapters'
+import { useMissions }      from '@/modules/missions/presentation/hooks/useMissions'
+import { useTeamProgress }  from '@/modules/missions/presentation/hooks/useTeamProgress'
+import { useTeam }          from '@/modules/teams/presentation/hooks/useTeam'
+import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
 
 import Image from 'next/image'
 import { Trophy, LogIn, LogOut, LayoutDashboard, LocateFixed, Loader2 } from 'lucide-react'
@@ -34,38 +35,7 @@ import { Trophy, LogIn, LogOut, LayoutDashboard, LocateFixed, Loader2 } from 'lu
 /* ── types ────────────────────────────────────────────────── */
 
 type MissionStatus = 'available' | 'completed' | 'review' | 'locked'
-type MissionType   = 'trivia' | 'photo' | 'creative'
 
-interface Mission {
-  id: string; chapterId: string; location: string
-  coordinates: [number, number]; type: MissionType
-  points: number; question: string; options: string[]; correctAnswer: number
-}
-interface Chapter {
-  id: string; number: number; title: string; subtitle: string
-  fragment: { id: string; name: string; icon: string }
-  requiredLevel: number; color: string; totalMissions: number
-}
-interface TeamData {
-  currentTeam: {
-    id: string; name: string; schoolName: string
-    level: number; levelTitle: string; points: number
-    nextLevelPoints: number; currentChapterId: string; color: string
-  }
-  missionProgress: Record<string, string>
-  unlockedChapters: string[]
-  earnedFragments: string[]
-}
-interface SchoolsData {
-  schoolStats: Record<string, {
-    rankingPosition: number
-    totalTeams: number
-    activeTeams: number
-    totalMissionsCompleted: number
-    totalPoints: number
-  }>
-  eventStats: { totalSchools: number; totalTeams: number; totalMissionsCompleted: number }
-}
 interface UserPosition { lng: number; lat: number; heading: number | null }
 
 /* ── constants ────────────────────────────────────────────── */
@@ -74,11 +44,6 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 const AREQUIPA_LNG = -71.5369
 const AREQUIPA_LAT = -16.3989
 const INITIAL_ZOOM = 14
-
-const chapters  = chaptersRaw as Chapter[]
-const missions  = missionsRaw as Mission[]
-const teamData  = teamDataRaw as TeamData
-const schoolsData = schoolsRaw as SchoolsData
 
 /* ── helpers ──────────────────────────────────────────────── */
 
@@ -197,6 +162,13 @@ export default function MapaPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
 
+  /* ─ server state (Supabase vía TanStack Query) ─ */
+  const { data: chapters = [] }      = useChapters()
+  const { data: missions = [] }      = useMissions()
+  const { data: team }               = useTeam(user?.teamId)
+  const { data: progressData }       = useTeamProgress(user?.teamId)
+  const { data: schoolRanking = [] } = useSchoolRanking()
+
   const [gpsStatus,      setGpsStatus]      = useState<'unknown' | 'denied' | 'granted'>('unknown')
   const [userPos,        setUserPos]        = useState<UserPosition | null>(null)
   const [locating,       setLocating]       = useState(false)
@@ -244,34 +216,6 @@ export default function MapaPage() {
     }
   }, [user, startWatch])
 
-  /* ─ derived data ─ */
-  const { currentTeam, missionProgress, unlockedChapters, earnedFragments } = teamData
-  const activeChapter  = chapters.find(c => c.id === currentTeam.currentChapterId) ?? chapters[0]
-  const activeMissions = missions.filter(m => m.chapterId === activeChapter.id)
-
-  const selectedMission: SelectedMission | null = selectedId
-    ? (() => {
-        const m = missions.find(x => x.id === selectedId)
-        if (!m) return null
-        return { id: m.id, location: m.location, type: m.type, points: m.points, question: m.question,
-          status: getMissionStatus(m.id, m.chapterId, unlockedChapters, missionProgress) }
-      })()
-    : null
-
-  const completedCount = activeMissions.filter(m => missionProgress[m.id] === 'completed').length
-  const reviewCount    = activeMissions.filter(m => missionProgress[m.id] === 'review').length
-  const hasFragment    = earnedFragments.includes(activeChapter.fragment.id)
-
-  /* ─ leader: pending review missions ─ */
-  const pendingMissions: PendingMission[] = missions
-    .filter(m => missionProgress[m.id] === 'review')
-    .map(m => ({ id: m.id, location: m.location, type: m.type, points: m.points }))
-
-  /* ─ director / admin: school stats ─ */
-  const mySchoolStats = user?.schoolName
-    ? (schoolsData.schoolStats[user.schoolName] ?? null)
-    : null
-
   /* ─ handlers ─ */
   const handleActivateGps = useCallback(() => {
     navigator.geolocation.getCurrentPosition(
@@ -318,6 +262,54 @@ export default function MapaPage() {
   if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'pk.YOUR_MAPBOX_TOKEN_HERE') return <NoTokenScreen />
   if (!isHydrated) return <LoadingScreen />
   if (!user)       return <PublicMapView onLogin={() => router.push('/login')} />
+  if (!chapters.length || !missions.length) return <LoadingScreen />
+
+  /* ─ derived data (desde Supabase) ─ */
+  const missionProgress: Record<string, string> = progressData ?? {}
+  const teamLevel = team?.level ?? user.level ?? 1
+
+  // Capítulos desbloqueados: los que el equipo ya alcanzó por nivel
+  const unlockedChapters = chapters.filter(c => c.requiredLevel <= teamLevel).map(c => c.id)
+  // Fragmentos ganados: capítulos que el equipo ya superó (nivel por debajo del actual)
+  const earnedFragments  = chapters.filter(c => c.requiredLevel < teamLevel).map(c => c.fragment.id)
+
+  const activeChapter  = chapters.find(c => c.id === team?.currentChapterId) ?? chapters[0]
+  const activeMissions = missions.filter(m => m.chapterId === activeChapter.id)
+
+  // Datos del equipo para el header (con defaults sensatos si aún faltan en BD)
+  const teamPoints     = team?.points ?? 0
+  const teamNextLevel  = team?.nextLevelPoints ?? 1500
+  const teamLevelTitle = user.levelTitle ?? 'Guardián'
+
+  const selectedMission: SelectedMission | null = selectedId
+    ? (() => {
+        const m = missions.find(x => x.id === selectedId)
+        if (!m) return null
+        return { id: m.id, location: m.location, type: m.type, points: m.points, question: m.question,
+          status: getMissionStatus(m.id, m.chapterId, unlockedChapters, missionProgress) }
+      })()
+    : null
+
+  const completedCount = activeMissions.filter(m => missionProgress[m.id] === 'completed').length
+  const reviewCount    = activeMissions.filter(m => missionProgress[m.id] === 'review').length
+  const hasFragment    = earnedFragments.includes(activeChapter.fragment.id)
+
+  /* ─ leader: misiones en revisión de su equipo ─ */
+  const pendingMissions: PendingMission[] = missions
+    .filter(m => missionProgress[m.id] === 'review')
+    .map(m => ({ id: m.id, location: m.location, type: m.type, points: m.points }))
+
+  /* ─ director: stats de su colegio (desde el ranking) ─ */
+  const mySchoolStats = (() => {
+    const s = schoolRanking.find(x => x.name === user.schoolName)
+    if (!s) return null
+    return {
+      rankingPosition:        s.rankingPosition,
+      totalTeams:             s.totalTeams,
+      totalMissionsCompleted: s.missionsCompleted,
+      totalPoints:            s.points,
+    }
+  })()
 
   /* ─ bottom-sheet chapter (student only) ─ */
   const sheetChapter: BottomSheetChapter = {
@@ -336,10 +328,10 @@ export default function MapaPage() {
             team={{
               name:            user.name,
               color:           user.color,
-              level:           currentTeam.level,
-              levelTitle:      currentTeam.levelTitle,
-              points:          currentTeam.points,
-              nextLevelPoints: currentTeam.nextLevelPoints,
+              level:           teamLevel,
+              levelTitle:      teamLevelTitle,
+              points:          teamPoints,
+              nextLevelPoints: teamNextLevel,
             }}
           />
         ) : (
@@ -374,10 +366,17 @@ export default function MapaPage() {
         ))}
       </Map>
 
-      {/* ── Logo watermark ── */}
-      <div className="fixed bottom-4 left-4 z-40 pointer-events-none select-none"
+      {/* ── Patrocinadores ── */}
+      <div className="fixed bottom-4 left-4 z-40 pointer-events-none select-none flex flex-col items-start gap-1"
         style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }}>
-        <Image src="/images/logo_principal.png" alt="" aria-hidden width={52} height={52} className="object-contain opacity-40" style={{ width: 52, height: 'auto' }} />
+        <span className="uppercase tracking-widest opacity-50"
+          style={{ fontFamily: 'var(--font-exo2), sans-serif', fontSize: 9, letterSpacing: '0.12em', color: 'var(--color-on-surface-var)' }}>
+          Powered by
+        </span>
+        <div className="flex items-center gap-2">
+          <Image src="/images/patrocinadores/logo_yuki.png" alt="Yuki" width={36} height={36} className="object-contain opacity-80" style={{ width: 'auto', height: 30 }} />
+          <Image src="/images/patrocinadores/citrus.png" alt="Citrus" width={36} height={36} className="object-contain opacity-80" style={{ width: 'auto', height: 30 }} />
+        </div>
       </div>
 
       {/* ── FABs ── */}
@@ -444,7 +443,7 @@ export default function MapaPage() {
       {user.role === 'leader' && (
         <LeaderBottomSheet
           pendingMissions={pendingMissions}
-          teamName={currentTeam.name}
+          teamName={team?.name ?? ''}
         />
       )}
       {user.role === 'director' && mySchoolStats && (
