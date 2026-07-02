@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Target, Users, AlertTriangle, RefreshCw } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
-import { supabase } from '@/shared/infrastructure/supabase/client'
+import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
 
 type SchoolRanking = {
   id: string
@@ -89,53 +89,12 @@ function Skeleton({ className }: { className?: string }) {
 export default function RankingPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate } = useAuthStore()
-  const [schools, setSchools] = useState<SchoolRanking[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: rankingData = [], isLoading: loading, isError, refetch } = useSchoolRanking()
 
   useEffect(() => { hydrate() }, [hydrate])
   useEffect(() => {
     if (isHydrated && !user) router.replace('/login')
   }, [user, isHydrated, router])
-
-  const fetchRanking = useCallback(async (signal: AbortSignal) => {
-    try {
-      setError(null)
-      setLoading(true)
-      const { data, error: err } = await supabase
-        .from('schools')
-        .select('id, name, short, points, missions_completed, teams(id)')
-        .order('points', { ascending: false })
-
-      if (signal.aborted) return
-
-      if (err) throw err
-
-      if (data) {
-        setSchools((data as any[]).map((s: any, index: number) => ({
-          id: s.id,
-          pos: index + 1,
-          name: s.name,
-          short: s.short,
-          points: s.points,
-          missions: s.missions_completed || 0,
-          teamsCount: Array.isArray(s.teams) ? s.teams.length : 0,
-        })))
-      }
-    } catch (err: unknown) {
-      console.error('Error cargando el ranking:', err)
-      setError('No pudimos conectar con la red de Guardianes. Verifica tu conexión e intenta nuevamente.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!user) return
-    const controller = new AbortController()
-    fetchRanking(controller.signal)
-    return () => controller.abort()
-  }, [user, fetchRanking])
 
   if (!user) {
     return (
@@ -144,6 +103,20 @@ export default function RankingPage() {
       </div>
     )
   }
+
+  // Mapea la entidad de dominio a la forma que consume esta vista
+  const schools: SchoolRanking[] = rankingData.map(s => ({
+    id: s.id,
+    pos: s.rankingPosition,
+    name: s.name,
+    short: s.short,
+    points: s.points,
+    missions: s.missionsCompleted,
+    teamsCount: s.totalTeams,
+  }))
+  const error = isError
+    ? 'No pudimos conectar con la red de Guardianes. Verifica tu conexión e intenta nuevamente.'
+    : null
 
   const myPos = schools.find(s => s.id === user.schoolId)?.pos ?? 0
   const topXp = schools.length > 0 ? schools[0].points : 0
@@ -259,7 +232,7 @@ export default function RankingPage() {
             <div className="rounded-2xl p-6 text-center" style={{ background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.2)' }}>
               <AlertTriangle className="w-8 h-8 mx-auto mb-2" style={{ color: '#ff4444' }} />
               <p className="text-sm font-bold mb-3" style={{ color: '#ff6666' }}>{error}</p>
-              <button onClick={() => { const c = new AbortController(); fetchRanking(c.signal) }}
+              <button onClick={() => refetch()}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
                 style={{ background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff6666' }}>
                 <RefreshCw className="w-4 h-4" />

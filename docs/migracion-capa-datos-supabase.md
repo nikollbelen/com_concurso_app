@@ -34,8 +34,11 @@ Reglas:
 | chapters | `Chapter` (Zod) | `getChapters` | `useChapters` |
 | missions | `Mission` (Zod) | `getMissions`, `getMissionById` | `useMissions`, `useMission` |
 | missions (progreso) | — | `getTeamProgress` | `useTeamProgress` |
+| missions (revisión) | `ReviewData` | `getReviewData`, `setMissionStatus` | `useReviewData`, `useSetMissionStatus` |
 | teams | `Team` | `getTeam` | `useTeam` |
+| teams (dashboard) | `StudentDashboard` | `getStudentDashboard` | `useStudentDashboard` |
 | schools | `SchoolRanking` | `getSchoolRanking` | `useSchoolRanking` |
+| schools (detalle) | `SchoolDetail` | `getSchoolsDetail` | `useSchoolsDetail` |
 
 ## Reglas de dominio resueltas
 
@@ -45,22 +48,35 @@ Reglas:
 - **Stats del director**: derivadas de `getSchoolRanking` (posición = orden por puntos).
 - **Defaults** donde el seed dejó NULL: `nextLevelPoints → 1500`, `level → 1`, `currentChapterId → primer capítulo`.
 
-## Progreso de migración de páginas
+## Progreso de migración de páginas — COMPLETO ✅
 
 | Página | Estado | Notas |
 |---|---|---|
-| `/mapa` | ✅ migrada | Quitados los 4 JSON. Verificado: tsc + runtime 200. |
-| `/mision/[id]` | ✅ migrada | Quitados 3 JSON. Verificado: tsc + runtime 200. |
-| `/insignias` | ⏳ pendiente | Usa `teams.json`. |
-| `/admin/panel` | ⏳ pendiente | Usa `schools.json`. |
-| `/director/panel` | ⏳ pendiente | Mixta (JSON + Supabase). |
-| `/ranking` | ♻️ refactor pendiente | Ya usa Supabase, pero inline; pasar a hook `useSchoolRanking`. |
-| `/leader/panel` | ♻️ refactor pendiente | Ya usa Supabase inline. |
-| `/student/panel` | ♻️ refactor pendiente | Ya usa Supabase inline. |
+| `/mapa` | ✅ migrada | Quitados los 4 JSON. |
+| `/mision/[id]` | ✅ migrada | Quitados 3 JSON. |
+| `/insignias` | ✅ migrada | Insignias calculadas por-usuario desde progreso + capítulos. |
+| `/admin/panel` | ✅ migrada | `useSchoolsDetail` (colegios + equipos + miembros). |
+| `/director/panel` | ✅ migrada | `useSchoolsDetail` filtrado al colegio del director. |
+| `/ranking` | ✅ refactorizada | Pasó de Supabase inline a `useSchoolRanking`. |
+| `/leader/panel` | ✅ refactorizada | `useReviewData` + `useSetMissionStatus` (aprobar/rechazar). |
+| `/student/panel` | ✅ refactorizada | `useStudentDashboard`. |
 
-> Las páginas "refactor pendiente" tienen errores de lint pre-existentes (setState en effects, `any`) que se limpian al pasarlas al patrón de hooks.
+**Ninguna página importa ya `data/json/`.** (Los JSON siguen en el repo como referencia, pero no se consumen.)
 
-## Verificación por página
+## Bug corregido en el camino
 
-- `npx tsc --noEmit` sin errores tras cada migración.
-- Smoke test HTTP 200 contra el dev server (`/mapa`, `/mision/[id]`).
+`/leader/panel` consultaba `missions!inner(title, ...)`, pero la tabla `missions`
+**no tiene** columna `title` (su nombre visible es `location`). Se corrigió en
+`getReviewData` a `location`.
+
+## Nota de flujo de trabajo
+
+Se trabaja directamente sobre `main` (equipo chico, revisión informal). No se usan
+ramas/PR por ahora. Los cambios de datos van en `seed.sql`; los de esquema irían en
+`supabase/migrations/`.
+
+## Verificación
+
+- `npx tsc --noEmit` → sin errores.
+- `npm run lint` → 0 errores (solo warnings pre-existentes de `<img>` y variables sin usar).
+- Smoke test HTTP 200 contra el dev server en las 8 páginas migradas.

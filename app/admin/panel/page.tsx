@@ -9,35 +9,20 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
-import schoolsRaw from '@/data/json/schools.json'
+import { useSchoolsDetail } from '@/modules/schools/presentation/hooks/useSchoolRanking'
+import type {
+  SchoolDetail,
+  SchoolTeamDetail,
+} from '@/modules/schools/infrastructure/repositories/schools.repository'
 
-/* ── types ─────────────────────────────────────────────────── */
-
-interface SchoolTeam {
-  id: string; name: string; color: string
-  level: number; levelTitle: string; points: number
-  missionsCompleted: number; missionsInReview: number
-  leader: string; members: string[]
-}
-interface School {
-  id: string; name: string; director: string
-  rankingPosition: number; totalPoints: number; missionsCompleted: number
-  teams: SchoolTeam[]
-}
-interface SchoolsData {
-  ranking: { position: number; name: string; points: number; teams: number; missionsCompleted: number }[]
-  schools: School[]
-  eventStats: { totalSchools: number; totalTeams: number; totalMissionsCompleted: number }
-}
-
-const schoolsData = schoolsRaw as unknown as SchoolsData
+/* ── constants ─────────────────────────────────────────────── */
 
 const POSITION_COLOR = (pos: number) =>
   pos === 1 ? '#FFD600' : pos === 2 ? '#9E9E9E' : pos === 3 ? '#CD7F32' : 'rgba(255,255,255,0.25)'
 
 /* ── TeamDetail ─────────────────────────────────────────────── */
 
-function TeamDetail({ team }: { team: SchoolTeam }) {
+function TeamDetail({ team }: { team: SchoolTeamDetail }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -94,12 +79,12 @@ function TeamDetail({ team }: { team: SchoolTeam }) {
         <div className="px-3 pb-3 flex flex-wrap gap-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <p className="w-full text-[8px] uppercase tracking-widest font-bold pt-2.5 mb-0.5"
             style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.25)' }}>Integrantes</p>
-          {team.members.map(name => (
-            <div key={name} className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+          {team.members.map(member => (
+            <div key={member.id} className="flex items-center gap-1 px-2 py-0.5 rounded-full"
               style={{ background: `${team.color}18`, border: `1px solid ${team.color}28` }}>
               <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black text-white"
-                style={{ background: `${team.color}aa` }}>{name.charAt(0)}</div>
-              <span className="text-[10px] font-semibold text-white/80" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>{name}</span>
+                style={{ background: `${team.color}aa` }}>{member.name.charAt(0)}</div>
+              <span className="text-[10px] font-semibold text-white/80" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>{member.name}</span>
             </div>
           ))}
         </div>
@@ -110,7 +95,7 @@ function TeamDetail({ team }: { team: SchoolTeam }) {
 
 /* ── SchoolDetailContent ────────────────────────────────────── */
 
-function SchoolDetailContent({ school, onClose, showClose }: { school: School; onClose: () => void; showClose?: boolean }) {
+function SchoolDetailContent({ school, onClose, showClose }: { school: SchoolDetail; onClose: () => void; showClose?: boolean }) {
   const totalPoints = school.teams.reduce((s, t) => s + t.points, 0)
 
   return (
@@ -191,18 +176,21 @@ function SchoolDetailContent({ school, onClose, showClose }: { school: School; o
 export default function AdminPanelPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
+  const { data: schools = [] } = useSchoolsDetail()
   const [confirmLogout,  setConfirmLogout]  = useState(false)
-  const [selectedSchool, setSelectedSchool] = useState<School | null>(null)
+  const [selectedSchool, setSelectedSchool] = useState<SchoolDetail | null>(null)
 
   useEffect(() => { hydrate() }, [hydrate])
   useEffect(() => {
     if (isHydrated && (!user || user.role !== 'admin')) router.replace('/login')
   }, [user, isHydrated, router])
 
-  if (!user) return null
+  if (!isHydrated || !user) return null
 
-  const { eventStats, ranking, schools } = schoolsData
-  const completedPercent = Math.round((eventStats.totalMissionsCompleted / (eventStats.totalTeams * 24)) * 100)
+  const totalSchools = schools.length
+  const totalTeams = schools.reduce((s, x) => s + x.teams.length, 0)
+  const totalMissionsCompleted = schools.reduce((s, x) => s + x.missionsCompleted, 0)
+  const completedPercent = totalTeams ? Math.round((totalMissionsCompleted / (totalTeams * 24)) * 100) : 0
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -252,15 +240,15 @@ export default function AdminPanelPage() {
               <div className="h-full rounded-full" style={{ width: `${completedPercent}%`, background: 'linear-gradient(90deg,#00a8ff,#00f0ff)' }} />
             </div>
             <p className="text-xs mt-1.5 text-right" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              {completedPercent}% completado · {eventStats.totalMissionsCompleted} misiones completadas
+              {completedPercent}% completado · {totalMissionsCompleted} misiones completadas
             </p>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { icon: <School    className="w-5 h-5" />, label: 'Colegios',  count: eventStats.totalSchools,           color: '#00f0ff' },
-              { icon: <Users     className="w-5 h-5" />, label: 'Equipos',   count: eventStats.totalTeams,             color: '#a855f7' },
-              { icon: <Flag      className="w-5 h-5" />, label: 'Misiones',  count: eventStats.totalMissionsCompleted, color: '#f9bd22' },
+              { icon: <School    className="w-5 h-5" />, label: 'Colegios',  count: totalSchools,           color: '#00f0ff' },
+              { icon: <Users     className="w-5 h-5" />, label: 'Equipos',   count: totalTeams,             color: '#a855f7' },
+              { icon: <Flag      className="w-5 h-5" />, label: 'Misiones',  count: totalMissionsCompleted, color: '#f9bd22' },
               { icon: <BarChart2 className="w-5 h-5" />, label: 'Capítulos', count: 5,                                 color: '#10b981' },
             ].map(a => (
               <div key={a.label} className="glass-panel hud-scanline rounded-2xl p-4 flex items-center gap-3"
@@ -287,35 +275,35 @@ export default function AdminPanelPage() {
               Colegios participantes
             </p>
             <div className="flex flex-col gap-2">
-              {ranking.map(r => {
-                const school = schools.find(s => s.name === r.name)
-                const isSelected = selectedSchool?.name === r.name
+              {schools.map(school => {
+                const isSelected = selectedSchool?.id === school.id
+                const pos = school.rankingPosition
                 return (
                   <button
-                    key={r.position}
-                    onClick={() => school && setSelectedSchool(isSelected ? null : school)}
+                    key={school.id}
+                    onClick={() => setSelectedSchool(isSelected ? null : school)}
                     className="glass-panel hud-scanline rounded-2xl px-4 py-3 flex items-center gap-3 w-full text-left transition-all active:scale-[0.99]"
                     style={{
                       border: isSelected
                         ? '1px solid rgba(0,240,255,0.4)'
-                        : r.position <= 3 ? `1px solid ${POSITION_COLOR(r.position)}25` : '1px solid rgba(255,255,255,0.07)',
+                        : pos <= 3 ? `1px solid ${POSITION_COLOR(pos)}25` : '1px solid rgba(255,255,255,0.07)',
                       background: isSelected ? 'rgba(0,240,255,0.06)' : undefined,
                     }}
                   >
                     <span className="text-base font-black w-8 text-center shrink-0"
-                      style={{ color: POSITION_COLOR(r.position), fontFamily: 'var(--font-exo2), sans-serif' }}>
-                      #{r.position}
+                      style={{ color: POSITION_COLOR(pos), fontFamily: 'var(--font-exo2), sans-serif' }}>
+                      #{pos}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white truncate">{r.name}</p>
+                      <p className="text-sm font-bold text-white truncate">{school.name}</p>
                       <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                        {school?.director ?? '—'} · {r.teams} equipo{r.teams !== 1 ? 's' : ''}
+                        {school.director} · {school.teams.length} equipo{school.teams.length !== 1 ? 's' : ''}
                       </p>
                     </div>
                     <div className="flex flex-col items-end shrink-0 gap-0.5">
                       <span className="font-black text-sm tabular-nums"
                         style={{ fontFamily: 'var(--font-exo2), sans-serif', color: '#f9bd22' }}>
-                        {r.points.toLocaleString('es-PE')}
+                        {school.totalPoints.toLocaleString('es-PE')}
                       </span>
                       <span className="text-[9px]" style={{ fontFamily: 'var(--font-exo2), sans-serif', color: 'rgba(255,255,255,0.3)' }}>XP</span>
                     </div>

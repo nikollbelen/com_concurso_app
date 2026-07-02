@@ -49,7 +49,7 @@ async function fetchProfile(userId: string): Promise<AuthUser | null> {
     .from('usuarios')
     .select('alias, nombre, apellidos, team_id, roles ( type ), schools ( id, name, short, color ), teams!usuarios_team_id_fkey ( level )')
     .eq('id', userId)
-    .single() as { data: UsuarioRow | null; error: any }
+    .single() as { data: UsuarioRow | null; error: { code?: string; message?: string; details?: string } | null }
 
   console.log('[fetchProfile] error →', error?.code, error?.message, error?.details)
   console.log('[fetchProfile] data →', data)

@@ -6,80 +6,23 @@ import { ChevronLeft, Lock } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
 
-import teamDataRaw from '@/data/json/teams.json'
+import { useChapters }     from '@/modules/chapters/presentation/hooks/useChapters'
+import { useTeam }         from '@/modules/teams/presentation/hooks/useTeam'
+import { useTeamProgress } from '@/modules/missions/presentation/hooks/useTeamProgress'
 
-const teamData = teamDataRaw as { missionProgress: Record<string, string>; earnedFragments: string[] }
-
-const completedCount = Object.values(teamData.missionProgress).filter(v => v === 'completed').length
-
-const BADGES = [
-  {
-    id: 'b-1', icon: '🦅', name: 'Primer Vuelo', category: 'Inicio',
-    desc: 'Completa tu primera misión', color: '#00a8ff',
-    earned: completedCount >= 1,
-  },
-  {
-    id: 'b-2', icon: '🏛️', name: 'Conocedor del Sillar', category: 'Capítulo 1',
-    desc: 'Completa todas las misiones del Capítulo 1', color: '#F59E0B',
-    earned: teamData.earnedFragments.includes('frag-sillar'),
-  },
-  {
-    id: 'b-3', icon: '🌋', name: 'Domador del Misti', category: 'Capítulo 2',
-    desc: 'Completa todas las misiones del Capítulo 2', color: '#EF4444',
-    earned: teamData.earnedFragments.includes('frag-misti'),
-  },
-  {
-    id: 'b-4', icon: '🌊', name: 'Guardián del Chili', category: 'Capítulo 3',
-    desc: 'Completa todas las misiones del Capítulo 3', color: '#3B82F6',
-    earned: teamData.earnedFragments.includes('frag-chili'),
-  },
-  {
-    id: 'b-5', icon: '📜', name: 'Cronista de la Historia', category: 'Capítulo 4',
-    desc: 'Completa todas las misiones del Capítulo 4', color: '#8B5CF6',
-    earned: teamData.earnedFragments.includes('frag-historia'),
-  },
-  {
-    id: 'b-6', icon: '🎭', name: 'Alma de la Ciudad', category: 'Capítulo 5',
-    desc: 'Completa todas las misiones del Capítulo 5', color: '#10B981',
-    earned: teamData.earnedFragments.includes('frag-cultura'),
-  },
-  {
-    id: 'b-7', icon: '⚡', name: 'Racha de 5', category: 'Logros',
-    desc: 'Completa 5 misiones consecutivas sin errores', color: '#f9bd22',
-    earned: completedCount >= 5,
-  },
-  {
-    id: 'b-8', icon: '📸', name: 'Fotógrafo Histórico', category: 'Logros',
-    desc: 'Envía evidencia fotográfica en una misión de foto', color: '#C084FC',
-    earned: Object.entries(teamData.missionProgress).some(([, v]) => v === 'completed' || v === 'review'),
-  },
-  {
-    id: 'b-9', icon: '🔍', name: 'Detective Arequipeño', category: 'Logros',
-    desc: 'Responde correctamente 10 trivias', color: '#38BDF8',
-    earned: completedCount >= 10,
-  },
-  {
-    id: 'b-10', icon: '🏆', name: 'Guardián de Arequipa', category: 'Especial',
-    desc: 'Obtén todos los fragmentos de los 5 capítulos', color: '#f9bd22',
-    earned: teamData.earnedFragments.length === 5,
-  },
-  {
-    id: 'b-11', icon: '💎', name: 'Equipo Perfecto', category: 'Especial',
-    desc: 'Completa todas las misiones del juego', color: '#00f0ff',
-    earned: completedCount >= 24,
-  },
-  {
-    id: 'b-12', icon: '🌟', name: 'Leyenda de Arequipa', category: 'Especial',
-    desc: 'Ocupa el primer lugar en el ranking final', color: '#f9bd22',
-    earned: false,
-  },
-]
+interface Badge {
+  id: string; icon: string; name: string; category: string
+  desc: string; color: string; earned: boolean
+}
 
 const CATEGORIES = ['Inicio', 'Capítulo 1', 'Capítulo 2', 'Capítulo 3', 'Capítulo 4', 'Capítulo 5', 'Logros', 'Especial']
 
 export default function InsigniasPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
+  const { data: chapters = [] } = useChapters()
+  const { data: team }          = useTeam(user?.teamId)
+  const { data: progressData }  = useTeamProgress(user?.teamId)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [filter, setFilter] = useState<string | null>(null)
 
@@ -88,7 +31,33 @@ export default function InsigniasPage() {
     if (isHydrated && !user) router.replace('/login')
   }, [user, isHydrated, router])
 
-  if (!user) return null
+  if (!isHydrated || !user) return null
+
+  /* ─ progreso e insignias derivadas de Supabase ─ */
+  const progressValues = Object.values(progressData ?? {})
+  const completedCount = progressValues.filter(v => v === 'completed').length
+  const hasAnyProgress = progressValues.some(v => v === 'completed' || v === 'review')
+  const teamLevel = team?.level ?? user.level ?? 1
+  const isChapterFragmentEarned = (n: number) => {
+    const c = chapters.find(ch => ch.number === n)
+    return c ? c.requiredLevel < teamLevel : false
+  }
+  const earnedFragmentsCount = chapters.filter(c => c.requiredLevel < teamLevel).length
+
+  const BADGES: Badge[] = [
+    { id: 'b-1',  icon: '🦅', name: 'Primer Vuelo',           category: 'Inicio',     desc: 'Completa tu primera misión',                        color: '#00a8ff', earned: completedCount >= 1 },
+    { id: 'b-2',  icon: '🏛️', name: 'Conocedor del Sillar',    category: 'Capítulo 1', desc: 'Completa todas las misiones del Capítulo 1',        color: '#F59E0B', earned: isChapterFragmentEarned(1) },
+    { id: 'b-3',  icon: '🌋', name: 'Domador del Misti',       category: 'Capítulo 2', desc: 'Completa todas las misiones del Capítulo 2',        color: '#EF4444', earned: isChapterFragmentEarned(2) },
+    { id: 'b-4',  icon: '🌊', name: 'Guardián del Chili',      category: 'Capítulo 3', desc: 'Completa todas las misiones del Capítulo 3',        color: '#3B82F6', earned: isChapterFragmentEarned(3) },
+    { id: 'b-5',  icon: '📜', name: 'Cronista de la Historia', category: 'Capítulo 4', desc: 'Completa todas las misiones del Capítulo 4',        color: '#8B5CF6', earned: isChapterFragmentEarned(4) },
+    { id: 'b-6',  icon: '🎭', name: 'Alma de la Ciudad',       category: 'Capítulo 5', desc: 'Completa todas las misiones del Capítulo 5',        color: '#10B981', earned: isChapterFragmentEarned(5) },
+    { id: 'b-7',  icon: '⚡', name: 'Racha de 5',              category: 'Logros',     desc: 'Completa 5 misiones consecutivas sin errores',      color: '#f9bd22', earned: completedCount >= 5 },
+    { id: 'b-8',  icon: '📸', name: 'Fotógrafo Histórico',     category: 'Logros',     desc: 'Envía evidencia fotográfica en una misión de foto', color: '#C084FC', earned: hasAnyProgress },
+    { id: 'b-9',  icon: '🔍', name: 'Detective Arequipeño',    category: 'Logros',     desc: 'Responde correctamente 10 trivias',                 color: '#38BDF8', earned: completedCount >= 10 },
+    { id: 'b-10', icon: '🏆', name: 'Guardián de Arequipa',    category: 'Especial',   desc: 'Obtén todos los fragmentos de los 5 capítulos',     color: '#f9bd22', earned: earnedFragmentsCount === 5 },
+    { id: 'b-11', icon: '💎', name: 'Equipo Perfecto',         category: 'Especial',   desc: 'Completa todas las misiones del juego',             color: '#00f0ff', earned: completedCount >= 24 },
+    { id: 'b-12', icon: '🌟', name: 'Leyenda de Arequipa',     category: 'Especial',   desc: 'Ocupa el primer lugar en el ranking final',         color: '#f9bd22', earned: false },
+  ]
 
   const earnedCount = BADGES.filter(b => b.earned).length
   const displayed   = filter ? BADGES.filter(b => b.category === filter) : BADGES

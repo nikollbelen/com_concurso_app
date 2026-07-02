@@ -2,142 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BookOpen, CheckCircle, Clock, Lock, LogOut, ChevronLeft, Award, Trophy, Map as MapIcon, Shield, AlertTriangle } from 'lucide-react'
+import { BookOpen, CheckCircle, Clock, Lock, LogOut, ChevronLeft, Award, Trophy, Map as MapIcon, Shield } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
-import { supabase } from '@/shared/infrastructure/supabase/client'
-
-// Interfaces basadas en tu base de datos
-interface ChapterData {
-  id: string
-  number: number
-  title: string
-  color: string
-  total_missions: number
-  required_level: number
-  fragments: { id: string; name: string; icon: string } | null
-}
-
-interface TeamDashboardData {
-  team_id: number
-  level: number
-  points: number
-  levelTitle: string
-  earnedFragments: string[]
-}
+import { useStudentDashboard } from '@/modules/teams/presentation/hooks/useStudentDashboard'
 
 export default function StudentPanelPage() {
   const router = useRouter()
-  const { user, isHydrated, hydrate, logout } = useAuthStore() as any
+  const { user, isHydrated, hydrate, logout } = useAuthStore()
   const [confirmLogout, setConfirmLogout] = useState(false)
 
-  // Estados de datos vivos
-  const [loading, setLoading] = useState(true)
-  const [noTeam, setNoTeam] = useState(false)
-  const [dashboard, setDashboard] = useState<TeamDashboardData | null>(null)
-  const [chapters, setChapters] = useState<ChapterData[]>([])
-  
-  // Estadísticas calculadas en vivo
-  const [totalCompleted, setTotalCompleted] = useState(0)
-  const [totalReview, setTotalReview] = useState(0)
-  const [totalSchools, setTotalSchools] = useState(16)
-  const [chapterStats, setChapterStats] = useState<any[]>([])
+  const teamId = user?.teamId
+  const { data: dashboard, isLoading } = useStudentDashboard(teamId)
 
   useEffect(() => { hydrate() }, [hydrate])
-  
   useEffect(() => {
     if (isHydrated && (!user || user.role !== 'student')) router.replace('/login')
   }, [user, isHydrated, router])
 
-  // Lógica de carga en vivo (Bypass de Caché)
-  useEffect(() => {
-  const fetchDashboardLive = async () => {
-    // 1. Obtenemos el equipo de forma segura basándonos en la sesión del usuario
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    // 2. Consulta directa a la tabla usuarios para obtener el team_id real
-    const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('team_id')
-      .eq('id', session.user.id)
-      .single()
-
-    if (userError || !userData?.team_id) {
-      setNoTeam(true);
-      setLoading(false);
-      return;
-    }
-
-    const teamId = userData.team_id; // ¡Aquí capturamos el 1 que ves en tu log!
-
-    try {
-    // 3. Ahora sí, hacemos las consultas usando este teamId confirmado
-    const [teamRes, chaptersRes, progressRes, schoolsCountRes] = await Promise.all([
-      supabase.from('vista_equipos_completos').select('*').eq('team_id', teamId).maybeSingle(),
-      supabase.from('chapters').select('id, number, title, color, total_missions, required_level, fragments:id_fragment(id, name, icon)').order('number', { ascending: true }),
-      supabase.from('mission_progression').select('status, missions:mission_id(id_chapter)').eq('team_id', teamId),
-      supabase.from('schools').select('id', { count: 'exact', head: true })
-    ]);
-
-        if (schoolsCountRes.count !== null) {
-          setTotalSchools(schoolsCountRes.count)
-        }
-
-        if (teamRes.data && chaptersRes.data) {
-          const teamData = teamRes.data
-          const chaptersData = chaptersRes.data as unknown as ChapterData[]
-          const progressData = progressRes.data || []
-
-          // Cálculos generales
-          // Asumimos que los estados en tu BD son 'aprobada' (completed) y 'pendiente' (review)
-          const completed = progressData.filter(p => p.status === 'aprobada' || p.status === 'completed')
-          const review = progressData.filter(p => p.status === 'pendiente' || p.status === 'review')
-          
-          setTotalCompleted(completed.length)
-          setTotalReview(review.length)
-
-          // Armamos los stats por capítulo
-          const stats = chaptersData.map(ch => {
-            const chProgress = progressData.filter(p => (p.missions as any)?.id_chapter === ch.id)
-            const chCompleted = chProgress.filter(p => p.status === 'aprobada' || p.status === 'completed').length
-            const chReview = chProgress.filter(p => p.status === 'pendiente' || p.status === 'review').length
-            
-            // Un capítulo se bloquea si el nivel del equipo es menor al requerido
-            const isLocked = teamData.level < (ch.required_level || 1)
-
-            return {
-              ...ch,
-              total: ch.total_missions || 0,
-              completed: chCompleted,
-              review: chReview,
-              locked: isLocked
-            }
-          })
-
-          setDashboard({
-            team_id: teamData.team_id,
-            level: teamData.level || 1,
-            points: teamData.points || 0,
-            levelTitle: `Nivel ${teamData.level || 1}`, // Puedes cruzarlo con tu objeto LEVEL_TITLES si deseas
-            earnedFragments: teamData.earned_fragments || []
-          })
-          setChapters(chaptersData)
-          setChapterStats(stats)
-        }
-      } catch (err) {
-        console.error("Error cargando panel:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (user && isHydrated) {
-      fetchDashboardLive()
-    }
-  }, [user, isHydrated])
-
-  if (!isHydrated || !user || loading) {
+  if (!isHydrated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
         <p className="text-sm font-bold animate-pulse text-cyan-400">Sincronizando datos en vivo...</p>
@@ -145,8 +28,8 @@ export default function StudentPanelPage() {
     )
   }
 
-  // Pantalla de protección si no tiene equipo asignado en vivo
-  if (noTeam || !dashboard) {
+  // Pantalla de protección si no tiene equipo asignado
+  if (teamId == null) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
         <div className="glass-panel p-8 rounded-3xl max-w-md border border-red-500/30">
@@ -164,10 +47,21 @@ export default function StudentPanelPage() {
     )
   }
 
+  if (isLoading || !dashboard) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
+        <p className="text-sm font-bold animate-pulse text-cyan-400">Sincronizando datos en vivo...</p>
+      </div>
+    )
+  }
+
+  const chapters = dashboard.chapters
+  const { totalCompleted, totalReview, totalSchools } = dashboard
+
   // Cálculos matemáticos del diseño original
   const nextLevelPoints = dashboard.level * 1000 // Escala de 1000pts por nivel
   const xpPercent = Math.min(100, Math.round((dashboard.points / nextLevelPoints) * 100))
-  const unlockedChaptersCount = chapterStats.filter(c => !c.locked).length
+  const unlockedChaptersCount = chapters.filter(c => !c.locked).length
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -295,8 +189,7 @@ export default function StudentPanelPage() {
             </div>
             <div className="grid grid-cols-5 gap-3">
               {chapters.map(ch => {
-                const fragId = ch.fragments?.id || ''
-                const earned = dashboard.earnedFragments.includes(fragId)
+                const earned = ch.fragmentId ? dashboard.earnedFragments.includes(ch.fragmentId) : false
                 return (
                   <div key={ch.id} className="flex flex-col items-center gap-1.5">
                     <div className="w-full aspect-square rounded-2xl flex items-center justify-center relative"
@@ -305,10 +198,10 @@ export default function StudentPanelPage() {
                         border: earned ? `1.5px solid ${ch.color}60` : '1.5px solid rgba(255,255,255,0.08)',
                         boxShadow: earned ? `0 0 12px ${ch.color}40` : 'none',
                       }}>
-                      {ch.fragments?.icon && (
+                      {ch.fragmentIcon && (
                         <img
-                          src={ch.fragments.icon}
-                          alt={ch.fragments.name}
+                          src={ch.fragmentIcon}
+                          alt={ch.fragmentName}
                           style={{
                             width: '82%',
                             height: '82%',
@@ -332,7 +225,7 @@ export default function StudentPanelPage() {
                     </div>
                     <p className="text-center leading-tight truncate w-full"
                       style={{ fontSize: 9, fontFamily: 'var(--font-exo2), sans-serif', color: earned ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)' }}>
-                      {ch.fragments?.name ? ch.fragments.name.replace('Fragmento ', '') : 'Bloqueado'}
+                      {ch.fragmentName ? ch.fragmentName.replace('Fragmento ', '') : 'Bloqueado'}
                     </p>
                   </div>
                 )
@@ -358,7 +251,7 @@ export default function StudentPanelPage() {
               Progreso por Capítulo
             </p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              {chapterStats.map(ch => {
+              {chapters.map(ch => {
                 const pct = ch.total > 0 ? Math.round((ch.completed / ch.total) * 100) : 0
                 return (
                   <div key={ch.id} className="rounded-2xl px-4 py-3"

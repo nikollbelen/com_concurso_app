@@ -1,171 +1,43 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BookOpen, Clock, CheckCircle, XCircle, Users, LogOut, Map, Loader2, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
-import { supabase } from '@/shared/infrastructure/supabase/client'
-
-interface PendingMission {
-  id: string
-  photo: string | null
-  created_at: string
-  mission_title: string
-  mission_points: number | null
-  mission_type: string | null
-}
-
-interface TeamMember {
-  id: string
-  name: string
-  alias: string
-}
-
-interface TeamData {
-  team_id: number
-  team_name: string
-  level: number | null
-  points: number | null
-  color: string | null
-  school_id: string
-  school_name: string
-  members: TeamMember[]
-  earned_fragments: string[]
-}
-
-type PageState = 'loading-auth' | 'loading-data' | 'no-team' | 'error' | 'ready'
+import { useReviewData, useSetMissionStatus } from '@/modules/missions/presentation/hooks/useReviewData'
 
 export default function LeaderPanelPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
   const [confirmLogout, setConfirmLogout] = useState(false)
 
-  const [pageState, setPageState] = useState<PageState>('loading-auth')
-  const [teamData, setTeamData] = useState<TeamData | null>(null)
-  const [pendingMissions, setPendingMissions] = useState<PendingMission[]>([])
-  const [missionsApprovedCount, setMissionsApprovedCount] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const teamId = user?.teamId
+  const { data, isLoading, isError, refetch } = useReviewData(teamId)
+  const setStatus = useSetMissionStatus(teamId)
 
   useEffect(() => { hydrate() }, [hydrate])
-
-  const loadData = useCallback(async () => {
-    setPageState('loading-data')
-    setErrorMessage(null)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.replace('/login'); return }
-
-      const { data: usuario } = await supabase
-        .from('usuarios')
-        .select('team_id')
-        .eq('id', session.user.id)
-        .single()
-
-      const teamId = (usuario as { team_id: number | null } | null)?.team_id
-      if (!teamId) { setPageState('no-team'); return }
-
-      const [teamResult, pendingResult, completedResult] = await Promise.all([
-        supabase
-          .from('vista_equipos_completos')
-          .select('*')
-          .eq('team_id', teamId)
-          .single(),
-        supabase
-          .from('mission_progression')
-          .select('id, photo, created_at, missions!inner(title, points, type)')
-          .eq('team_id', teamId)
-          .eq('status' as never, 'review'),
-        supabase
-          .from('mission_progression')
-          .select('id', { count: 'exact', head: true })
-          .eq('team_id', teamId)
-          .eq('status' as never, 'completed'),
-      ])
-
-      if (teamResult.error) throw teamResult.error
-      setTeamData(teamResult.data as unknown as TeamData)
-
-      setPendingMissions(
-        (pendingResult.data ?? []).map((item) => {
-          const m = item as unknown as {
-            id: string
-            photo: string | null
-            created_at: string
-            missions: { title: string; points: number | null; type: string | null }
-          }
-          return {
-            id: m.id,
-            photo: m.photo,
-            created_at: m.created_at,
-            mission_title: m.missions.title,
-            mission_points: m.missions.points,
-            mission_type: m.missions.type,
-          }
-        }),
-      )
-
-      setMissionsApprovedCount(completedResult.count ?? 0)
-      setPageState('ready')
-    } catch (e) {
-      console.error('[LeaderPanel]', e)
-      setErrorMessage('Error al cargar los datos. Intenta de nuevo.')
-      setPageState('error')
-    }
-  }, [router])
-
   useEffect(() => {
-    if (!isHydrated) return
-    if (!user || user.role !== 'leader') { router.replace('/login'); return }
-    loadData()
-  }, [isHydrated, user, router, loadData])
+    if (isHydrated && (!user || user.role !== 'leader')) router.replace('/login')
+  }, [isHydrated, user, router])
 
-  const handleApprove = async (progressionId: string) => {
-    setPendingMissions((prev) => prev.filter((m) => m.id !== progressionId))
-    setMissionsApprovedCount((prev) => prev + 1)
+  const handleApprove = (id: string) => setStatus.mutate({ id, status: 'completed' })
+  const handleReject  = (id: string) => setStatus.mutate({ id, status: 'rejected' })
 
-    const { error } = await (supabase as any)
-      .from('mission_progression')
-      .update({ status: 'completed' })
-      .eq('id', progressionId)
-
-    if (error) { console.error(error); loadData(); return }
-
-    if (teamData) {
-      const { data } = await supabase
-        .from('vista_equipos_completos')
-        .select('*')
-        .eq('team_id', teamData.team_id)
-        .single()
-      if (data) setTeamData(data as unknown as TeamData)
-    }
-  }
-
-  const handleReject = async (progressionId: string) => {
-    setPendingMissions((prev) => prev.filter((m) => m.id !== progressionId))
-
-    const { error } = await (supabase as any)
-      .from('mission_progression')
-      .update({ status: 'rejected' })
-      .eq('id', progressionId)
-
-    if (error) { console.error(error); loadData() }
-  }
-
-  if (pageState === 'loading-auth' || pageState === 'loading-data') {
+  /* ─ guards ─ */
+  if (!isHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: '#00f0ff' }} />
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {pageState === 'loading-auth' ? 'Verificando sesión...' : 'Cargando panel...'}
-          </p>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Verificando sesión...</p>
         </div>
       </div>
     )
   }
+  if (!user || user.role !== 'leader') return null
 
-  if (pageState === 'no-team') {
+  if (teamId == null) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#0d1117' }}>
         <div
@@ -191,13 +63,24 @@ export default function LeaderPanelPage() {
     )
   }
 
-  if (pageState === 'error') {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0d1117' }}>
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: '#00f0ff' }} />
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Cargando panel...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#0d1117' }}>
         <div className="text-center">
-          <p className="text-sm mb-4" style={{ color: '#ff6b6b' }}>{errorMessage}</p>
+          <p className="text-sm mb-4" style={{ color: '#ff6b6b' }}>Error al cargar los datos. Intenta de nuevo.</p>
           <button
-            onClick={loadData}
+            onClick={() => refetch()}
             className="px-4 py-2 rounded-xl text-sm font-bold"
             style={{ background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.2)', color: '#00f0ff' }}
           >
@@ -208,6 +91,9 @@ export default function LeaderPanelPage() {
     )
   }
 
+  const teamData = data?.team ?? null
+  const pendingMissions = data?.pending ?? []
+  const missionsApprovedCount = data?.approvedCount ?? 0
   const memberCount = teamData?.members?.length ?? 0
 
   return (
@@ -226,9 +112,9 @@ export default function LeaderPanelPage() {
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-widest" style={{ color: '#a855f7' }}>Panel Docente</p>
-            <p className="text-sm font-bold text-white">{user!.name}</p>
-            {teamData?.school_name && (
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{teamData.school_name}</p>
+            <p className="text-sm font-bold text-white">{user.name}</p>
+            {teamData?.schoolName && (
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{teamData.schoolName}</p>
             )}
           </div>
         </div>
@@ -294,9 +180,9 @@ export default function LeaderPanelPage() {
                       style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                     />
                   )}
-                  <p className="text-sm font-bold text-white mb-0.5">{m.mission_title}</p>
+                  <p className="text-sm font-bold text-white mb-0.5">{m.missionTitle}</p>
                   <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {teamData?.team_name} · {m.mission_points ?? '?'} pts
+                    {teamData?.teamName} · {m.missionPoints ?? '?'} pts
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -343,7 +229,7 @@ export default function LeaderPanelPage() {
                 Equipo asignado
               </p>
               <p className="text-sm font-bold text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
-                {teamData?.team_name ?? '—'}
+                {teamData?.teamName ?? '—'}
               </p>
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 {memberCount} alumnos · Nivel {teamData?.level ?? '?'}

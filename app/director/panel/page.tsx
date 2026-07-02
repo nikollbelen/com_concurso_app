@@ -9,34 +9,12 @@ import {
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
 
-import teamsRaw    from '@/data/json/teams.json'
-import schoolsRaw  from '@/data/json/schools.json'
-
-/* ── types ─────────────────────────────────────────────────── */
-
-interface TeamMember { id: string; name: string }
-interface SchoolTeam {
-  id: string; name: string; color: string
-  level: number; levelTitle: string; points: number
-  missionsCompleted: number; missionsInReview: number
-  leader: { name: string }
-  members: TeamMember[]
-}
-interface SchoolsData {
-  ranking: { position: number; name: string; points: number; teams: number }[]
-  schoolStats: Record<string, {
-    rankingPosition: number; totalTeams: number
-    totalMissionsCompleted: number; totalPoints: number
-  }>
-  eventStats: { totalSchools: number }
-}
-
-const schoolTeams = (teamsRaw as { schoolTeams: SchoolTeam[] }).schoolTeams
-const schoolsData = schoolsRaw as SchoolsData
+import { useSchoolsDetail } from '@/modules/schools/presentation/hooks/useSchoolRanking'
+import type { SchoolTeamDetail } from '@/modules/schools/infrastructure/repositories/schools.repository'
 
 /* ── TeamCard ──────────────────────────────────────────────── */
 
-function TeamCard({ team }: { team: SchoolTeam }) {
+function TeamCard({ team }: { team: SchoolTeamDetail }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -71,7 +49,7 @@ function TeamCard({ team }: { team: SchoolTeam }) {
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <GraduationCap className="w-3.5 h-3.5 shrink-0" style={{ color: '#00f0ff' }} />
-          <span className="text-xs font-semibold text-white/70 truncate" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>{team.leader.name}</span>
+          <span className="text-xs font-semibold text-white/70 truncate" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>{team.leader}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -119,6 +97,7 @@ function TeamCard({ team }: { team: SchoolTeam }) {
 export default function DirectorPanelPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
+  const { data: schools = [] } = useSchoolsDetail()
   const [confirmLogout, setConfirmLogout] = useState(false)
 
   useEffect(() => { hydrate() }, [hydrate])
@@ -126,12 +105,13 @@ export default function DirectorPanelPage() {
     if (isHydrated && (!user || user.role !== 'director')) router.replace('/login')
   }, [user, isHydrated, router])
 
-  if (!user) return null
+  if (!isHydrated || !user) return null
 
-  const myStats   = user.schoolName ? (schoolsData.schoolStats[user.schoolName] ?? null) : null
-  const totalPoints = myStats?.totalPoints ?? schoolTeams.reduce((s, t) => s + t.points, 0)
-  const rankingPos  = myStats?.rankingPosition ?? '—'
-  const totalTeams  = myStats?.totalTeams ?? schoolTeams.length
+  const mySchool    = schools.find(s => s.id === user.schoolId) ?? null
+  const schoolTeams = mySchool?.teams ?? []
+  const totalPoints = mySchool?.totalPoints ?? 0
+  const rankingPos: number | string = mySchool?.rankingPosition ?? '—'
+  const totalTeams  = mySchool?.teams.length ?? 0
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
