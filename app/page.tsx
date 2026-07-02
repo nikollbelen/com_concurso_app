@@ -40,10 +40,12 @@ export default function HomePage() {
     <div className="min-h-dvh w-full flex flex-col items-center justify-center relative overflow-x-hidden"
       style={{ background: '#0d1117' }}>
 
-      {/* Ambient glows */}
+      {/* Ambient glows + hadas de fondo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute rounded-full" style={{ width: 600, height: 600, top: '-25%', left: '50%', transform: 'translateX(-50%)', background: 'radial-gradient(circle, rgba(0,168,255,0.10) 0%, transparent 70%)' }} />
         <div className="absolute rounded-full" style={{ width: 420, height: 420, bottom: '-10%', right: '-12%', background: 'radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)' }} />
+        <span className="fairy fairy-1" aria-hidden />
+        <span className="fairy fairy-2" aria-hidden />
       </div>
 
       <div className="relative z-10 w-full max-w-md lg:max-w-5xl px-6 py-12 lg:py-16 flex flex-col gap-10">
@@ -139,11 +141,11 @@ export default function HomePage() {
                 <p className="text-[10px] uppercase tracking-widest font-bold text-center" style={{ color: '#f9bd22', fontFamily: 'var(--font-exo2), sans-serif' }}>
                   Colecciona los 5 Fragmentos
                 </p>
-                <div className="flex items-center justify-center gap-3 flex-wrap">
+                <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
                   {fragments.map(f => (
-                    <div key={f.id} className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    <div key={f.id} className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl flex items-center justify-center"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <Image src={f.icon} alt={f.name} width={34} height={34} className="object-contain opacity-80" style={{ width: 34, height: 34 }} />
+                      <Image src={f.icon} alt={f.name} width={56} height={56} className="object-contain opacity-90" style={{ width: '78%', height: '78%' }} />
                     </div>
                   ))}
                 </div>
@@ -163,6 +165,48 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Hadas de fondo — solo transform/opacity (GPU), muy liviano */}
+      <style>{`
+        .fairy {
+          position: absolute; top: 0; left: 0; border-radius: 9999px;
+          will-change: transform, opacity;
+        }
+        .fairy-1 {
+          width: 10px; height: 10px;
+          background: radial-gradient(circle, #ffffff 0%, #8fe8ff 45%, rgba(0,168,255,0) 72%);
+          box-shadow: 0 0 12px 4px rgba(80,210,255,0.55), 0 0 26px 10px rgba(0,168,255,0.25);
+          animation: fairy-path-1 24s ease-in-out infinite, fairy-twinkle 3.2s ease-in-out infinite;
+        }
+        .fairy-2 {
+          width: 7px; height: 7px;
+          background: radial-gradient(circle, #fff6d6 0%, #f9bd22 45%, rgba(249,189,34,0) 72%);
+          box-shadow: 0 0 10px 3px rgba(249,189,34,0.5), 0 0 22px 8px rgba(249,189,34,0.2);
+          animation: fairy-path-2 30s ease-in-out infinite, fairy-twinkle 2.4s ease-in-out infinite;
+          animation-delay: -6s, 0s;
+        }
+        @keyframes fairy-path-1 {
+          0%   { transform: translate(8vw, 72vh); }
+          20%  { transform: translate(26vw, 24vh); }
+          45%  { transform: translate(58vw, 58vh); }
+          68%  { transform: translate(82vw, 18vh); }
+          100% { transform: translate(8vw, 72vh); }
+        }
+        @keyframes fairy-path-2 {
+          0%   { transform: translate(88vw, 30vh); }
+          25%  { transform: translate(62vw, 68vh); }
+          55%  { transform: translate(30vw, 40vh); }
+          80%  { transform: translate(12vw, 78vh); }
+          100% { transform: translate(88vw, 30vh); }
+        }
+        @keyframes fairy-twinkle {
+          0%, 100% { opacity: 0.45; }
+          50%      { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fairy { animation: none; opacity: 0.55; }
+        }
+      `}</style>
     </div>
   )
 }
