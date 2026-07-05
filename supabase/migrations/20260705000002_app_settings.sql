@@ -11,6 +11,7 @@ create table if not exists "public"."app_settings" (
 alter table "public"."app_settings" enable row level security;
 
 -- Lectura pública: los alumnos necesitan el radio para el check de llegada.
+drop policy if exists "Lectura pública de ajustes" on "public"."app_settings";
 create policy "Lectura pública de ajustes"
   on "public"."app_settings"
   as permissive
@@ -19,6 +20,7 @@ create policy "Lectura pública de ajustes"
   using (true);
 
 -- Escritura solo para administradores (role_id admin).
+drop policy if exists "Solo admin modifica ajustes" on "public"."app_settings";
 create policy "Solo admin modifica ajustes"
   on "public"."app_settings"
   as permissive
