@@ -1,5 +1,7 @@
 'use client'
 
+import { Tooltip } from '@/shared/ui/components/Tooltip'
+
 /* ── types ─────────────────────────────────────────────────── */
 
 interface Team {
@@ -14,28 +16,6 @@ interface Team {
 type StudentProps = { role: 'student'; team: Team }
 type StaffProps   = { role: 'leader' | 'director' | 'admin'; name: string; schoolName?: string; color: string }
 export type GameHeaderProps = StudentProps | StaffProps
-
-/* ── Tooltip ─────────────────────────────────────────────── */
-
-function Tooltip({ text, align = 'center', dir = 'down' }: { text: string; align?: 'left' | 'center' | 'right'; dir?: 'down' | 'up' }) {
-  const pos = dir === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'
-  const h = align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'
-  return (
-    <div
-      className={`absolute ${pos} ${h} whitespace-nowrap px-2.5 py-1.5 rounded-xl text-[11px] font-semibold pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50`}
-      style={{
-        background: 'rgba(15,23,42,0.92)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        color: 'rgba(255,255,255,0.85)',
-        fontFamily: 'var(--font-exo2), sans-serif',
-        backdropFilter: 'blur(8px)',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-      }}
-    >
-      {text}
-    </div>
-  )
-}
 
 /* ── role config ─────────────────────────────────────────── */
 
@@ -121,6 +101,7 @@ function StudentHeader({ team }: { team: Team }) {
             <Tooltip
               text={`${team.points} / ${team.nextLevelPoints} XP para el nivel ${team.level + 1}`}
               align="left"
+              dir="down"
             />
           </div>
         </div>
@@ -147,7 +128,7 @@ function StudentHeader({ team }: { team: Team }) {
               {team.points.toLocaleString('es-PE')}
             </span>
           </div>
-          <Tooltip text="Puntos de experiencia acumulados" align="right" />
+          <Tooltip text="Puntos de experiencia acumulados" align="right" dir="down" />
         </div>
 
         <div className="relative group">
@@ -172,7 +153,7 @@ function StudentHeader({ team }: { team: Team }) {
               {team.level}
             </span>
           </div>
-          <Tooltip text={`${team.levelTitle ?? `Nivel ${team.level}`} · sube completando misiones`} align="right" />
+          <Tooltip text={`${team.levelTitle ?? `Nivel ${team.level}`} · sube completando misiones`} align="right" dir="down" />
         </div>
       </div>
     </div>
@@ -252,7 +233,7 @@ function StaffHeader({ role, name, schoolName, color }: StaffProps) {
               {ROLE_SHORT[role]}
             </span>
           </div>
-          <Tooltip text={ROLE_LABEL[role]} align="right" />
+          <Tooltip text={ROLE_LABEL[role]} align="right" dir="down" />
         </div>
       </div>
     </div>

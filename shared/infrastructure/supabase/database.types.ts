@@ -83,6 +83,18 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['teams']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['teams']['Insert']>
       }
+      levels: {
+        // Catálogo: fuente de verdad de títulos de nivel y umbrales de puntos.
+        Row: {
+          level: number
+          title: string
+          next_level_points: number | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['levels']['Row'], 'created_at'>
+        Update: Partial<Database['public']['Tables']['levels']['Insert']>
+      }
       usuarios: {
         Row: {
           id: string

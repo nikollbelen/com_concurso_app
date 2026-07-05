@@ -1,13 +1,5 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
 
-const LEVEL_TITLES: Record<number, string> = {
-  1: 'Iniciado',
-  2: 'Explorador Histórico',
-  3: 'Guardián Novato',
-  4: 'Guardián Valiente',
-  5: 'Guardián Maestro',
-}
-
 export interface StudentChapter {
   id: string
   number: number
@@ -22,21 +14,46 @@ export interface StudentChapter {
   locked: boolean
 }
 
+export interface TeamMember {
+  id: string
+  name: string
+  alias: string
+  /** true si es el líder/docente guía del equipo (teams.leader_id). */
+  isLeader: boolean
+}
+
 export interface StudentDashboard {
+  teamName: string
+  members: TeamMember[]
   level: number
   points: number
   levelTitle: string
+  /** Puntos totales para subir al siguiente nivel (catálogo `levels`). null = nivel máximo. */
+  nextLevelPoints: number | null
   earnedFragments: string[]
   chapters: StudentChapter[]
   totalCompleted: number
   totalReview: number
+  /** Suma de misiones de todos los capítulos. */
+  totalMissions: number
+  /** Misiones que aún faltan por hacer (total − completadas − en revisión). */
+  totalPending: number
   totalSchools: number
 }
 
+interface RawMember {
+  id: string
+  name: string | null
+  alias: string | null
+}
 interface VistaRow {
+  team_name: string | null
   level: number | null
+  level_title: string | null
+  next_level_points: number | null
   points: number | null
   earned_fragments: string[] | null
+  members: RawMember[] | null
 }
 interface ChapterRow {
   id: string
@@ -57,9 +74,12 @@ const isReview = (s: string) => s === 'review' || s === 'pendiente'
 
 /** Dashboard del alumno: nivel/puntos del equipo, fragmentos y progreso por capítulo. */
 export async function getStudentDashboard(teamId: number): Promise<StudentDashboard> {
-  const [teamRes, chaptersRes, progressRes, schoolsCountRes] = await Promise.all([
+  const [teamRes, teamMetaRes, chaptersRes, progressRes, schoolsCountRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).from('vista_equipos_completos').select('*').eq('team_id', teamId).maybeSingle(),
+    // leader_id no está en la vista; lo traemos directo de teams para marcar al líder.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('teams').select('leader_id').eq('id', teamId).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('chapters')
@@ -75,9 +95,22 @@ export async function getStudentDashboard(teamId: number): Promise<StudentDashbo
   ])
 
   const team = teamRes.data as VistaRow | null
+  const leaderId = (teamMetaRes.data as { leader_id: string | null } | null)?.leader_id ?? null
   const level = team?.level ?? 1
   const points = team?.points ?? 0
   const earnedFragments = team?.earned_fragments ?? []
+
+  // Integrantes del equipo: líder primero, luego el resto por nombre.
+  const members: TeamMember[] = (team?.members ?? [])
+    .map((m) => ({
+      id: m.id,
+      name: m.name ?? m.alias ?? 'Sin nombre',
+      alias: m.alias ?? '',
+      isLeader: m.id === leaderId,
+    }))
+    .sort((a, b) =>
+      a.isLeader === b.isLeader ? a.name.localeCompare(b.name, 'es') : a.isLeader ? -1 : 1,
+    )
   const chapterRows = (chaptersRes.data ?? []) as ChapterRow[]
   const progress = (progressRes.data ?? []) as ProgressRow[]
 
@@ -98,14 +131,26 @@ export async function getStudentDashboard(teamId: number): Promise<StudentDashbo
     }
   })
 
+  const totalCompleted = progress.filter((p) => isCompleted(p.status)).length
+  const totalReview = progress.filter((p) => isReview(p.status)).length
+  const totalMissions = chapters.reduce((sum, ch) => sum + ch.total, 0)
+
   return {
+    teamName: team?.team_name ?? 'Mi Equipo',
+    members,
     level,
     points,
-    levelTitle: LEVEL_TITLES[level] ?? 'Guardián',
+    // Título del nivel: desde el catálogo `levels` (expuesto por la vista)
+    levelTitle: team?.level_title ?? 'Guardián',
+    // Umbral del siguiente nivel: catálogo `levels` vía vista. null = nivel máximo.
+    nextLevelPoints: team?.next_level_points ?? null,
     earnedFragments,
     chapters,
-    totalCompleted: progress.filter((p) => isCompleted(p.status)).length,
-    totalReview: progress.filter((p) => isReview(p.status)).length,
+    totalCompleted,
+    totalReview,
+    totalMissions,
+    // Misiones por hacer: nunca negativo.
+    totalPending: Math.max(0, totalMissions - totalCompleted - totalReview),
     totalSchools: schoolsCountRes.count ?? 0,
   }
 }

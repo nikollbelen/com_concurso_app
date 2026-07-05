@@ -25,14 +25,6 @@ interface AuthState {
   logout: () => Promise<void>
 }
 
-const LEVEL_TITLES: Record<number, string> = {
-  1: 'Iniciado',
-  2: 'Explorador Histórico',
-  3: 'Guardián Novato',
-  4: 'Guardián Valiente',
-  5: 'Guardián Maestro',
-}
-
 interface UsuarioRow {
   alias: string
   nombre: string
@@ -40,14 +32,15 @@ interface UsuarioRow {
   team_id: number | null
   roles: { type: string } | null
   schools: { id:string,  name: string; short: string; color: string | null } | null
-  teams: { level: number | null } | null
+  // `levels` viene embebido vía la FK teams.level → levels.level
+  teams: { level: number | null; levels: { title: string | null } | null } | null
 }
 
 async function fetchProfile(userId: string): Promise<AuthUser | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('usuarios')
-    .select('alias, nombre, apellidos, team_id, roles ( type ), schools ( id, name, short, color ), teams!usuarios_team_id_fkey ( level )')
+    .select('alias, nombre, apellidos, team_id, roles ( type ), schools ( id, name, short, color ), teams!usuarios_team_id_fkey ( level, levels ( title ) )')
     .eq('id', userId)
     .single() as { data: UsuarioRow | null; error: { code?: string; message?: string; details?: string } | null }
 
@@ -69,7 +62,8 @@ async function fetchProfile(userId: string): Promise<AuthUser | null> {
     schoolShortName:   row.schools?.short ?? row.schools?.name,
     color:       row.schools?.color ?? '#7C3AED',
     level,
-    levelTitle:  LEVEL_TITLES[level] ?? 'Guardián',
+    // Título del nivel: se lee del catálogo `levels` en BD (fuente de verdad)
+    levelTitle:  row.teams?.levels?.title ?? 'Guardián',
   }
 }
 

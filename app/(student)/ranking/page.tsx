@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, Target, Users, AlertTriangle, RefreshCw, Trophy } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
+import { Tooltip } from '@/shared/ui/components/Tooltip'
 
 type SchoolRanking = {
   id: string
@@ -21,16 +22,6 @@ const MEDAL = {
   2: { emoji: '🥈', color: '#CBD5E1', shadow: 'none',                          bg: 'rgba(203,213,225,0.06)', border: '1px solid rgba(203,213,225,0.2)' },
   3: { emoji: '🥉', color: '#c87533', shadow: 'none',                          bg: 'rgba(200,117,51,0.08)', border: '1px solid rgba(200,117,51,0.3)' },
 } as const
-
-function Tooltip({ text, align = 'center' }: { text: string; align?: 'left' | 'center' | 'right' }) {
-  const h = align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'
-  return (
-    <div className={`absolute bottom-full mb-2 ${h} whitespace-nowrap px-2.5 py-1.5 rounded-xl text-[11px] font-semibold pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50`}
-      style={{ background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-exo2), sans-serif', backdropFilter: 'blur(8px)' }}>
-      {text}
-    </div>
-  )
-}
 
 function SchoolRow({ school, isMe, topXp }: { school: SchoolRanking; isMe: boolean; topXp: number }) {
   const pct = topXp > 0 ? (school.points / topXp) * 100 : 0

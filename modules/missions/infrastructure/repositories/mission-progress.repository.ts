@@ -25,6 +25,79 @@ export async function getTeamProgress(teamId: number): Promise<Record<string, st
   return map
 }
 
+/** El equipo ya tiene otra misión activa (in_progress); solo puede llevar una a la vez. */
+export class TeamBusyError extends Error {
+  constructor() {
+    super('TEAM_BUSY')
+    this.name = 'TeamBusyError'
+  }
+}
+
+/** Postgres unique_violation → el índice parcial `una misión activa por equipo` se disparó. */
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505'
+}
+
+/**
+ * Marca una misión como `in_progress` para un equipo (el alumno pulsó
+ * "Empezar misión" y va en camino al lugar físico del marcador).
+ *
+ * Regla: un equipo solo puede tener UNA misión activa a la vez. Si ya hay otra
+ * misión en `in_progress`, lanza `TeamBusyError` (nadie del equipo puede empezar
+ * otra hasta que la activa se envíe a revisión o se complete). El índice único
+ * parcial en BD es el respaldo contra carreras entre dos alumnos del equipo.
+ *
+ * Si ya existe una fila de progreso para esta misión solo la mueve a
+ * `in_progress` cuando sigue `available`; nunca pisa un estado ya avanzado
+ * (review/completed).
+ */
+export async function startMission(teamId: number, missionId: string): Promise<void> {
+  // Guardia: ¿el equipo ya tiene otra misión activa?
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: active, error: activeErr } = await (supabase as any)
+    .from('mission_progression')
+    .select('mission_id')
+    .eq('team_id', teamId)
+    .eq('status', 'in_progress')
+    .maybeSingle()
+
+  if (activeErr) throw new Error(`startMission(active): ${activeErr.message}`)
+  if (active && active.mission_id !== missionId) throw new TeamBusyError()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existing, error: findErr } = await (supabase as any)
+    .from('mission_progression')
+    .select('id, status')
+    .eq('team_id', teamId)
+    .eq('mission_id', missionId)
+    .maybeSingle()
+
+  if (findErr) throw new Error(`startMission(find): ${findErr.message}`)
+
+  if (existing) {
+    if (existing.status !== 'available') return // ya avanzada → no tocar
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from('mission_progression')
+      .update({ status: 'in_progress' })
+      .eq('id', existing.id)
+    if (error) {
+      if (isUniqueViolation(error)) throw new TeamBusyError()
+      throw new Error(`startMission(update): ${error.message}`)
+    }
+    return
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('mission_progression')
+    .insert({ team_id: teamId, mission_id: missionId, status: 'in_progress' })
+  if (error) {
+    if (isUniqueViolation(error)) throw new TeamBusyError()
+    throw new Error(`startMission(insert): ${error.message}`)
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
  * Revisión de evidencias (panel del docente/líder)
  * ───────────────────────────────────────────────────────────── */

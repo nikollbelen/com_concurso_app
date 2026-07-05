@@ -14,6 +14,7 @@ import { MissionMarker }      from '@/modules/missions/presentation/components/M
 import {
   MissionBottomSheet,
   type SelectedMission,
+  type ArrivalResult,
   type Chapter as BottomSheetChapter,
 } from '@/modules/missions/presentation/components/MissionBottomSheet'
 import {
@@ -27,6 +28,8 @@ import { useChapters }      from '@/modules/chapters/presentation/hooks/useChapt
 import { useMissions }      from '@/modules/missions/presentation/hooks/useMissions'
 import { useTeamProgress }  from '@/modules/missions/presentation/hooks/useTeamProgress'
 import { useTeam }          from '@/modules/teams/presentation/hooks/useTeam'
+import { useStartMission }  from '@/modules/missions/presentation/hooks/useStartMission'
+import { useArrivalRadius } from '@/modules/settings/presentation/hooks/useArrivalRadius'
 import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
 
 import Image from 'next/image'
@@ -34,7 +37,7 @@ import { Trophy, LogIn, LogOut, LayoutDashboard, LocateFixed, Loader2 } from 'lu
 
 /* ── types ────────────────────────────────────────────────── */
 
-type MissionStatus = 'available' | 'completed' | 'review' | 'locked'
+type MissionStatus = 'available' | 'in_progress' | 'completed' | 'review' | 'locked' | 'blocked'
 
 interface UserPosition { lng: number; lat: number; heading: number | null }
 
@@ -44,18 +47,37 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 const AREQUIPA_LNG = -71.5369
 const AREQUIPA_LAT = -16.3989
 const INITIAL_ZOOM = 14
+/** Radio (metros) por defecto si el ajuste aún no cargó desde la BD. */
+const DEFAULT_ARRIVAL_RADIUS_M = 20
 
 /* ── helpers ──────────────────────────────────────────────── */
 
 function getMissionStatus(
   missionId: string, chapterId: string,
   unlockedChapters: string[], progress: Record<string, string>,
+  activeMissionId: string | null,
 ): MissionStatus {
   if (!unlockedChapters.includes(chapterId)) return 'locked'
   const p = progress[missionId]
-  if (p === 'completed') return 'completed'
-  if (p === 'review')    return 'review'
+  if (p === 'completed')   return 'completed'
+  if (p === 'review')      return 'review'
+  if (p === 'in_progress') return 'in_progress'
+  // El equipo solo puede tener una misión activa a la vez: si hay otra en curso,
+  // las demás disponibles quedan en espera (candado) hasta que se termine aquella.
+  if (activeMissionId && activeMissionId !== missionId) return 'blocked'
   return 'available'
+}
+
+/** Distancia en metros entre dos coordenadas (fórmula de Haversine). */
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000 // radio terrestre en metros
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(a))
 }
 
 /* ── Sub-components ───────────────────────────────────────── */
@@ -168,6 +190,8 @@ export default function MapaPage() {
   const { data: team }               = useTeam(user?.teamId)
   const { data: progressData }       = useTeamProgress(user?.teamId)
   const { data: schoolRanking = [] } = useSchoolRanking()
+  const startMissionMut               = useStartMission(user?.teamId)
+  const { data: arrivalRadius = DEFAULT_ARRIVAL_RADIUS_M } = useArrivalRadius()
 
   const [gpsStatus,      setGpsStatus]      = useState<'unknown' | 'denied' | 'granted'>('unknown')
   const [userPos,        setUserPos]        = useState<UserPosition | null>(null)
@@ -254,7 +278,24 @@ export default function MapaPage() {
   }, [user?.role])
 
   const handleCloseSheet   = useCallback(() => setSelectedId(null), [])
-  const handleGoToMission  = useCallback((id: string) => router.push(`/mision/${id}`), [router])
+
+  /* Alumno pulsó "Empezar misión" → la marca en camino (in_progress) en la BD */
+  const handleStartMission = useCallback((id: string) => {
+    startMissionMut.mutate(id)
+  }, [startMissionMut])
+
+  /* Alumno pulsó "¡Ya llegué!" → verifica que está dentro de 20 m del marcador */
+  const handleConfirmArrival = useCallback(async (id: string): Promise<ArrivalResult> => {
+    if (!userPos) return { ok: false, reason: 'no-gps' }
+    const m = missions.find(x => x.id === id)
+    if (!m) return { ok: false, reason: 'no-gps' }
+    const distanceM = haversineMeters(userPos.lat, userPos.lng, m.coordinates[1], m.coordinates[0])
+    if (distanceM <= arrivalRadius) {
+      router.push(`/mision/${id}`)
+      return { ok: true }
+    }
+    return { ok: false, reason: 'too-far', distanceM: Math.round(distanceM) }
+  }, [userPos, missions, router, arrivalRadius])
   const handleConfirmLogout = useCallback(() => { logout(); router.replace('/login') }, [logout, router])
   const handleGoToPanel     = useCallback(() => { router.push(ROLE_PANEL[user?.role ?? 'student']) }, [router, user])
 
@@ -267,6 +308,12 @@ export default function MapaPage() {
   /* ─ derived data (desde Supabase) ─ */
   const missionProgress: Record<string, string> = progressData ?? {}
   const teamLevel = team?.level ?? user.level ?? 1
+
+  // Misión activa del equipo (una sola a la vez). Mientras exista, las demás
+  // disponibles se muestran bloqueadas para todo el equipo.
+  const activeMissionId = Object.keys(missionProgress).find(
+    id => missionProgress[id] === 'in_progress',
+  ) ?? null
 
   // Capítulos desbloqueados: los que el equipo ya alcanzó por nivel
   const unlockedChapters = chapters.filter(c => c.requiredLevel <= teamLevel).map(c => c.id)
@@ -286,7 +333,8 @@ export default function MapaPage() {
         const m = missions.find(x => x.id === selectedId)
         if (!m) return null
         return { id: m.id, location: m.location, type: m.type, points: m.points, question: m.question,
-          status: getMissionStatus(m.id, m.chapterId, unlockedChapters, missionProgress) }
+          coordinates: m.coordinates,
+          status: getMissionStatus(m.id, m.chapterId, unlockedChapters, missionProgress, activeMissionId) }
       })()
     : null
 
@@ -360,7 +408,7 @@ export default function MapaPage() {
         {activeMissions.map(m => (
           <MissionMarker key={m.id} id={m.id}
             longitude={m.coordinates[0]} latitude={m.coordinates[1]}
-            status={getMissionStatus(m.id, m.chapterId, unlockedChapters, missionProgress)}
+            status={getMissionStatus(m.id, m.chapterId, unlockedChapters, missionProgress, activeMissionId)}
             type={m.type} onClick={handleMarkerClick}
           />
         ))}
@@ -436,7 +484,9 @@ export default function MapaPage() {
           reviewCount={reviewCount}
           selectedMission={selectedMission}
           hasFragment={hasFragment}
-          onGoToMission={handleGoToMission}
+          isStarting={startMissionMut.isPending}
+          onStartMission={handleStartMission}
+          onConfirmArrival={handleConfirmArrival}
           onClose={handleCloseSheet}
         />
       )}

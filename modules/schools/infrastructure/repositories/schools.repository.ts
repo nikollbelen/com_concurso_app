@@ -47,14 +47,6 @@ export async function getSchoolRanking(): Promise<SchoolRanking[]> {
 
 const DIRECTOR_ROLE = '33333333-3333-3333-3333-333333333333'
 
-const LEVEL_TITLES: Record<number, string> = {
-  1: 'Iniciado',
-  2: 'Explorador Histórico',
-  3: 'Guardián Novato',
-  4: 'Guardián Valiente',
-  5: 'Guardián Maestro',
-}
-
 export interface SchoolTeamDetail {
   id: number
   name: string
@@ -90,6 +82,8 @@ interface TeamMini {
   id: number
   name: string
   level: number | null
+  // `levels` embebido vía la FK teams.level → levels.level
+  levels: { title: string | null } | null
   points: number | null
   missions_completed: number | null
   leader_id: string | null
@@ -117,7 +111,7 @@ export async function getSchoolsDetail(): Promise<SchoolDetail[]> {
   const { data, error } = await (supabase as any)
     .from('schools')
     .select(
-      'id, name, color, points, missions_completed, teams ( id, name, level, points, missions_completed, leader_id ), usuarios ( id, nombre, apellidos, role_id, team_id )',
+      'id, name, color, points, missions_completed, teams ( id, name, level, levels ( title ), points, missions_completed, leader_id ), usuarios ( id, nombre, apellidos, role_id, team_id )',
     )
     .order('points', { ascending: false })
 
@@ -154,7 +148,8 @@ export async function getSchoolsDetail(): Promise<SchoolDetail[]> {
         name: t.name,
         color: row.color ?? '#7C3AED',
         level,
-        levelTitle: LEVEL_TITLES[level] ?? 'Guardián',
+        // Título del nivel: desde el catálogo `levels` en BD (fuente de verdad)
+        levelTitle: t.levels?.title ?? 'Guardián',
         points: t.points ?? 0,
         missionsCompleted: t.missions_completed ?? 0,
         missionsInReview: reviewCount.get(t.id) ?? 0,

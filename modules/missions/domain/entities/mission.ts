@@ -20,4 +20,4 @@ export type Mission = z.infer<typeof MissionSchema>
 export type MissionType = Mission['type']
 
 /** Estados posibles de una misión para un equipo (tabla mission_progression + derivados). */
-export type MissionStatus = 'available' | 'completed' | 'review' | 'locked' | 'rejected'
+export type MissionStatus = 'available' | 'in_progress' | 'completed' | 'review' | 'locked' | 'rejected'

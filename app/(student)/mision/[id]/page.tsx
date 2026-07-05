@@ -12,6 +12,7 @@ import { useMission }      from '@/modules/missions/presentation/hooks/useMissio
 import { useChapters }     from '@/modules/chapters/presentation/hooks/useChapters'
 import { useTeam }         from '@/modules/teams/presentation/hooks/useTeam'
 import { useTeamProgress } from '@/modules/missions/presentation/hooks/useTeamProgress'
+import { Tooltip } from '@/shared/ui/components/Tooltip'
 
 type MissionStatus = 'available' | 'completed' | 'review' | 'locked'
 
@@ -19,15 +20,6 @@ const TYPE_CFG = {
   trivia:   { icon: <HelpCircle className="w-4 h-4" />, label: 'Trivia',   color: '#38BDF8', desc: 'Responde correctamente la pregunta' },
   photo:    { icon: <Camera     className="w-4 h-4" />, label: 'Foto',     color: '#C084FC', desc: 'Captura evidencia fotográfica' },
   creative: { icon: <Palette    className="w-4 h-4" />, label: 'Creativa', color: '#F472B6', desc: 'Demuestra tu creatividad' },
-}
-
-function Tooltip({ text }: { text: string }) {
-  return (
-    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1.5 rounded-xl text-[11px] font-semibold pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50"
-      style={{ background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-exo2), sans-serif', backdropFilter: 'blur(8px)' }}>
-      {text}
-    </div>
-  )
 }
 
 export default function MisionPage() {

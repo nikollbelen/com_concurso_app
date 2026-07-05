@@ -1,9 +1,9 @@
 'use client'
 
 import { Marker } from 'react-map-gl/mapbox'
-import { CheckCircle, Clock, Lock, Target, Camera, Palette } from 'lucide-react'
+import { CheckCircle, Clock, Lock, Target, Camera, Palette, Navigation } from 'lucide-react'
 
-export type MissionStatus = 'available' | 'completed' | 'review' | 'locked'
+export type MissionStatus = 'available' | 'in_progress' | 'completed' | 'review' | 'locked' | 'blocked'
 export type MissionType   = 'trivia' | 'photo' | 'creative'
 
 interface MissionMarkerProps {
@@ -21,6 +21,14 @@ const STATUS_CFG = {
     tailColor: '#ff3b30',
     shadow: '0 10px 15px -3px rgba(255,59,48,0.5), 0 4px 6px -2px rgba(0,0,0,0.4)',
     glow: 'rgba(255,59,48,0.5)',
+    bounce: true,
+    border: '3px solid rgba(255,255,255,0.9)',
+  },
+  in_progress: {
+    gradient: 'linear-gradient(to bottom, #c4b5fd, #8b5cf6)',
+    tailColor: '#8b5cf6',
+    shadow: '0 10px 15px -3px rgba(139,92,246,0.5), 0 4px 6px -2px rgba(0,0,0,0.4)',
+    glow: 'rgba(139,92,246,0.5)',
     bounce: true,
     border: '3px solid rgba(255,255,255,0.9)',
   },
@@ -48,13 +56,24 @@ const STATUS_CFG = {
     bounce: false,
     border: '3px solid rgba(255,255,255,0.3)',
   },
+  // Equipo ocupado con otra misión activa: mismo candado gris que `locked`.
+  blocked: {
+    gradient: 'linear-gradient(to bottom, #64748b, #475569)',
+    tailColor: '#475569',
+    shadow: '0 6px 12px rgba(0,0,0,0.4)',
+    glow: 'none',
+    bounce: false,
+    border: '3px solid rgba(255,255,255,0.3)',
+  },
 } as const
 
 function PinIcon({ status, type }: { status: MissionStatus; type: MissionType }) {
   const cls = 'w-5 h-5 text-white drop-shadow-sm'
-  if (status === 'completed') return <CheckCircle className={cls} strokeWidth={2.5} />
-  if (status === 'review')    return <Clock       className={cls} strokeWidth={2.5} />
-  if (status === 'locked')    return <Lock        className="w-5 h-5 text-white/50" strokeWidth={2} />
+  if (status === 'completed')   return <CheckCircle className={cls} strokeWidth={2.5} />
+  if (status === 'review')      return <Clock       className={cls} strokeWidth={2.5} />
+  if (status === 'in_progress') return <Navigation  className={cls} strokeWidth={2.5} />
+  if (status === 'locked')      return <Lock        className="w-5 h-5 text-white/50" strokeWidth={2} />
+  if (status === 'blocked')     return <Lock        className="w-5 h-5 text-white/50" strokeWidth={2} />
   if (type === 'photo')       return <Camera      className={cls} strokeWidth={2.5} />
   if (type === 'creative')    return <Palette     className={cls} strokeWidth={2.5} />
   return <Target className={cls} strokeWidth={2.5} />

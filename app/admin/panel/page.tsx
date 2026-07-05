@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
 import { useSchoolsDetail } from '@/modules/schools/presentation/hooks/useSchoolRanking'
+import { GameSettingsCard } from '@/modules/settings/presentation/components/GameSettingsCard'
 import type {
   SchoolDetail,
   SchoolTeamDetail,
@@ -265,6 +266,9 @@ export default function AdminPanelPage() {
             ))}
           </div>
         </div>
+
+        {/* Configuración del juego */}
+        <GameSettingsCard />
 
         {/* Two-column on lg: schools list + detail */}
         <div className="grid lg:grid-cols-[360px_1fr] xl:grid-cols-[420px_1fr] gap-5 items-start">

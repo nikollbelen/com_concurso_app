@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Trophy, Target, Users, ChevronLeft } from 'lucide-react'
 import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
 
 const EVENT_NAME   = 'La Búsqueda de los Guardianes de Arequipa'
-const TOTAL_MISSIONS = 24
 
 const MEDAL: Record<number, { emoji: string; color: string; bg: string }> = {
   1: { emoji: '🥇', color: '#f9bd22', bg: 'rgba(249,189,34,0.12)' },
@@ -44,7 +44,6 @@ export default function TableroVivoPage() {
   const hasStarted = schools.some(s => s.pos !== null)
   const ranked = schools.filter(s => s.pos !== null)
   const topXp = schools[0]?.points ?? 0
-  const totalMissionsCompleted = schools.reduce((acc, s) => acc + s.missions, 0)
 
   const podium = hasStarted && ranked.length >= 3 ? [ranked[1], ranked[0], ranked[2]] : []
   const tableSchools = podium.length > 0 ? schools.slice(3) : schools
@@ -85,16 +84,6 @@ export default function TableroVivoPage() {
           <div className="text-center">
             <p className="text-3xl font-black tabular-nums" style={{ color: '#f9bd22' }}>{schools.length}</p>
             <p className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>colegios</p>
-          </div>
-          <div className="w-px h-10" style={{ background: 'rgba(255,255,255,0.1)' }} />
-          <div className="text-center">
-            <p className="text-3xl font-black tabular-nums" style={{ color: '#00f0ff' }}>{totalMissionsCompleted}</p>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>misiones totales</p>
-          </div>
-          <div className="w-px h-10" style={{ background: 'rgba(255,255,255,0.1)' }} />
-          <div className="text-center">
-            <p className="text-3xl font-black tabular-nums" style={{ color: '#00e676' }}>{TOTAL_MISSIONS}</p>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>misiones del juego</p>
           </div>
           <div className="w-px h-10" style={{ background: 'rgba(255,255,255,0.1)' }} />
           <div className="text-center">
@@ -215,9 +204,16 @@ export default function TableroVivoPage() {
         </div>
       </section>
 
-      {/* Footer branding */}
-      <footer className="relative z-10 text-center pb-6" style={{ color: 'rgba(255,255,255,0.15)' }}>
-        <p className="text-xs uppercase tracking-[0.3em]">Municipalidad Provincial de Arequipa</p>
+      {/* Footer branding — patrocinadores */}
+      <footer className="relative z-10 flex flex-col items-center gap-1 pb-6 select-none">
+        <span className="uppercase tracking-widest opacity-50"
+          style={{ fontFamily: 'var(--font-exo2), sans-serif', fontSize: 9, letterSpacing: '0.12em', color: 'var(--color-on-surface-var)' }}>
+          Powered by
+        </span>
+        <div className="flex items-center gap-2 opacity-80">
+          <Image src="/images/patrocinadores/logo_yuki.png" alt="Yuki" width={36} height={36} className="object-contain" style={{ width: 'auto', height: 30 }} />
+          <Image src="/images/patrocinadores/citrus.png" alt="Citrus" width={36} height={36} className="object-contain" style={{ width: 'auto', height: 30 }} />
+        </div>
       </footer>
     </div>
   )

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BookOpen, CheckCircle, Clock, Lock, LogOut, ChevronLeft, Award, Trophy, Map as MapIcon, Shield } from 'lucide-react'
+import { BookOpen, CheckCircle, Clock, Lock, LogOut, ChevronLeft, Trophy, Map as MapIcon, Shield, ListTodo, Crown, Users } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
 import { useStudentDashboard } from '@/modules/teams/presentation/hooks/useStudentDashboard'
+import { Tooltip } from '@/shared/ui/components/Tooltip'
 
 export default function StudentPanelPage() {
   const router = useRouter()
@@ -56,11 +57,14 @@ export default function StudentPanelPage() {
   }
 
   const chapters = dashboard.chapters
-  const { totalCompleted, totalReview, totalSchools } = dashboard
+  const { teamName, members, totalCompleted, totalReview, totalPending, totalMissions, totalSchools } = dashboard
 
-  // Cálculos matemáticos del diseño original
-  const nextLevelPoints = dashboard.level * 1000 // Escala de 1000pts por nivel
-  const xpPercent = Math.min(100, Math.round((dashboard.points / nextLevelPoints) * 100))
+  // Umbral del siguiente nivel: 100% desde el catálogo `levels` (BD). null = nivel tope.
+  const nextLevelPoints = dashboard.nextLevelPoints
+  const isMaxLevel = nextLevelPoints === null
+  const xpPercent = nextLevelPoints === null
+    ? 100
+    : Math.min(100, Math.round((dashboard.points / nextLevelPoints) * 100))
   const unlockedChaptersCount = chapters.filter(c => !c.locked).length
 
   return (
@@ -80,8 +84,10 @@ export default function StudentPanelPage() {
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: '#00f0ff' }}>Mi Perfil</p>
-            <p className="text-sm font-bold text-white">{user.name}</p>
+            <p className="text-[10px] uppercase tracking-widest truncate max-w-[45vw]" style={{ color: '#00f0ff' }}>
+              Equipo · {teamName}
+            </p>
+            <p className="text-sm font-bold text-white truncate max-w-[45vw]">{user.name}</p>
           </div>
         </div>
         <button onClick={() => setConfirmLogout(true)}
@@ -92,73 +98,78 @@ export default function StudentPanelPage() {
       </div>
 
       {/* ── Layout Original: mobile stack / desktop two-column ──────── */}
-      <div className="mx-auto px-4 pt-5 pb-10 max-w-7xl lg:flex lg:gap-8 lg:items-start lg:px-8">
+      <div className="mx-auto px-4 pt-5 pb-10 max-w-[1600px] lg:flex lg:gap-8 lg:items-start lg:px-8 xl:px-12 xl:gap-10">
 
         {/* ══ Columna izquierda: perfil + stats + navegación ══ */}
-        <div className="lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4 lg:sticky lg:top-24">
+        <div className="lg:w-88 xl:w-104 shrink-0 flex flex-col gap-4 lg:sticky lg:top-24">
 
           {/* XP card */}
           <div className="glass-panel hud-scanline rounded-2xl p-5"
             style={{ border: '1px solid rgba(0,240,255,0.2)', boxShadow: 'inset 0 0 20px rgba(0,240,255,0.04)' }}>
             <div className="flex items-center justify-between mb-4">
-              <div>
+              <div className="relative group hover:z-50">
                 <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#00f0ff' }}>
                   {dashboard.levelTitle}
                 </p>
                 <p className="text-3xl font-black text-white mt-0.5" style={{ fontFamily: 'var(--font-exo2), sans-serif' }}>
                   {dashboard.points.toLocaleString('es-PE')} <span className="text-base font-bold" style={{ color: '#f9bd22' }}>XP</span>
                 </p>
+                <Tooltip text={`Puntos de experiencia (XP) que ha ganado tu equipo completando misiones. Tu rango actual es «${dashboard.levelTitle}».`} align="left" />
               </div>
-              <div className="flex flex-col items-center px-3 py-2 rounded-2xl"
+              <div className="relative group hover:z-50 flex flex-col items-center px-3 py-2 rounded-2xl"
                 style={{ background: 'linear-gradient(160deg,#00b4d8,#0077b6)', boxShadow: '0 4px 0 rgba(0,0,0,0.4), 0 0 16px rgba(0,240,255,0.3)' }}>
                 <span className="text-[9px] uppercase tracking-widest text-white/60">NV</span>
                 <span className="text-2xl font-black text-white leading-none">{dashboard.level}</span>
+                <Tooltip text={isMaxLevel
+                  ? 'Nivel máximo del concurso: ya no hay un nivel superior.'
+                  : `Tu nivel actual. Alcanza ${nextLevelPoints?.toLocaleString('es-PE')} XP para subir al nivel ${dashboard.level + 1}.`} align="right" />
               </div>
             </div>
-            <div className="w-full h-2.5 rounded-full overflow-hidden mb-1" style={{ background: 'rgba(255,255,255,0.07)' }}>
-              <div className="h-full rounded-full relative overflow-hidden"
-                style={{ width: `${xpPercent}%`, background: 'linear-gradient(90deg,#00a8ff,#00f0ff)', boxShadow: '0 0 8px rgba(0,240,255,0.7)', transition: 'width 0.7s ease' }}>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent" style={{ animation: 'shimmer 2.5s infinite' }} />
+            <div className="relative group hover:z-50">
+              <div className="w-full h-2.5 rounded-full overflow-hidden mb-1" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                <div className="h-full rounded-full relative overflow-hidden"
+                  style={{ width: `${xpPercent}%`, background: 'linear-gradient(90deg,#00a8ff,#00f0ff)', boxShadow: '0 0 8px rgba(0,240,255,0.7)', transition: 'width 0.7s ease' }}>
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent" style={{ animation: 'shimmer 2.5s infinite' }} />
+                </div>
               </div>
+              <p className="text-[11px] text-right" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {nextLevelPoints === null
+                  ? '¡Nivel máximo alcanzado!'
+                  : `${dashboard.points} / ${nextLevelPoints} XP para nivel ${dashboard.level + 1}`}
+              </p>
+              <Tooltip
+                text={nextLevelPoints === null
+                  ? 'Has alcanzado el nivel máximo. ¡Eres una leyenda de Arequipa!'
+                  : `Llevas ${xpPercent}% del camino al nivel ${dashboard.level + 1}. Te faltan ${(nextLevelPoints - dashboard.points).toLocaleString('es-PE')} XP.`}
+                align="center"
+              />
             </div>
-            <p className="text-[11px] text-right" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              {dashboard.points} / {nextLevelPoints} XP para nivel {dashboard.level + 1}
-            </p>
           </div>
 
           {/* Quick stats */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: <CheckCircle className="w-4 h-4" />, label: 'Completadas', value: totalCompleted, color: '#00e676' },
-              { icon: <Clock className="w-4 h-4" />,       label: 'En revisión', value: totalReview,    color: '#ff9800' },
-              { icon: <MapIcon className="w-4 h-4" />,     label: 'Capítulos',   value: unlockedChaptersCount, color: '#00f0ff' },
-            ].map(s => (
-              <div key={s.label} className="glass-panel hud-scanline rounded-2xl p-3 text-center"
+              { icon: <CheckCircle className="w-4 h-4" />, label: 'Completadas', value: totalCompleted, color: '#00e676', tip: 'Misiones que tu equipo ya completó y fueron aprobadas.' },
+              { icon: <Clock className="w-4 h-4" />,       label: 'En revisión', value: totalReview,    color: '#ff9800', tip: 'Misiones enviadas que tu docente aún está revisando.' },
+              { icon: <ListTodo className="w-4 h-4" />,    label: 'Faltan',      value: totalPending,   color: '#f44336', tip: `Misiones que tu equipo aún no completa (de ${totalMissions} en total).` },
+              { icon: <MapIcon className="w-4 h-4" />,     label: 'Capítulos',   value: unlockedChaptersCount, color: '#00f0ff', tip: 'Capítulos que ya tienes desbloqueados para jugar.' },
+            ].map((s, i) => (
+              <div key={s.label} className="relative group hover:z-50 glass-panel hud-scanline rounded-2xl p-3 text-center"
                 style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="flex justify-center mb-1" style={{ color: s.color }}>{s.icon}</div>
                 <p className="text-2xl font-black text-white">{s.value}</p>
                 <p className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+                <Tooltip text={s.tip} align={i % 2 === 0 ? 'left' : 'right'} />
               </div>
             ))}
           </div>
 
           {/* Accesos rápidos */}
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => router.push('/insignias')}
-              className="glass-panel hud-scanline rounded-2xl p-4 flex items-center gap-3 text-left"
-              style={{ border: '1px solid rgba(249,189,34,0.2)' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'rgba(249,189,34,0.12)', border: '1px solid rgba(249,189,34,0.3)' }}>
-                <Award className="w-4 h-4" style={{ color: '#f9bd22' }} />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white">Insignias</p>
-                <p className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Colección</p>
-              </div>
-            </button>
+          <div className="grid grid-cols-1 gap-3">
             <button onClick={() => router.push('/ranking')}
-              className="glass-panel hud-scanline rounded-2xl p-4 flex items-center gap-3 text-left w-full cursor-pointer"
+              className="relative group hover:z-50 glass-panel hud-scanline rounded-2xl p-4 flex items-center gap-3 text-left w-full cursor-pointer"
               style={{ border: '1px solid rgba(0,240,255,0.15)' }}>
+              <Tooltip text={`Mira la tabla de posiciones: compites con ${totalSchools} colegios de Arequipa.`} align="center" />
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.25)' }}>
                 <Trophy className="w-4 h-4" style={{ color: '#00f0ff' }} />
@@ -173,25 +184,84 @@ export default function StudentPanelPage() {
           </div>
         </div>
 
-        {/* ══ Columna derecha: fragmentos + capítulos ══ */}
+        {/* ══ Columna derecha: mi equipo + fragmentos + capítulos ══ */}
         <div className="flex-1 min-w-0 flex flex-col gap-4 mt-4 lg:mt-0">
+
+          {/* Mi Equipo */}
+          <div className="glass-panel hud-scanline rounded-2xl p-5" style={{ border: '1px solid rgba(0,240,255,0.15)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="relative group hover:z-50 flex items-center gap-2">
+                <Users className="w-4 h-4" style={{ color: '#00f0ff' }} />
+                <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#00f0ff' }}>Mi Equipo</p>
+                <Tooltip text={`Integrantes de «${teamName}». La corona marca a tu docente guía.`} align="left" />
+              </div>
+              <span className="relative group hover:z-50 text-xs font-bold tabular-nums" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {members.length}
+                <Tooltip text={`Tu equipo tiene ${members.length} ${members.length === 1 ? 'integrante' : 'integrantes'}.`} align="right" />
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {members.map(m => {
+                const isMe = m.id === user.id
+                return (
+                  <div key={m.id} className="flex items-center gap-3 rounded-xl px-3 py-2"
+                    style={{
+                      background: isMe ? 'rgba(0,240,255,0.08)' : 'rgba(255,255,255,0.03)',
+                      border: isMe ? '1px solid rgba(0,240,255,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                    }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-white shrink-0"
+                      style={{ background: m.isLeader ? 'linear-gradient(135deg,#f9bd22,#f59e0b)' : 'linear-gradient(135deg,#00b4d8,#0077b6)' }}>
+                      {m.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white truncate">{m.name}</p>
+                      <p className="text-[9px] uppercase tracking-wider" style={{ color: m.isLeader ? '#f9bd22' : 'rgba(255,255,255,0.35)' }}>
+                        {m.isLeader ? 'Docente guía' : 'Alumno'}
+                      </p>
+                    </div>
+                    {m.isLeader && <Crown className="w-4 h-4 shrink-0" style={{ color: '#f9bd22' }} />}
+                    {isMe && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md shrink-0"
+                        style={{ background: 'rgba(0,240,255,0.15)', color: '#00f0ff' }}>Tú</span>
+                    )}
+                  </div>
+                )
+              })}
+              {members.length === 0 && (
+                <p className="text-[11px] text-center py-2 sm:col-span-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Aún no hay integrantes registrados.
+                </p>
+              )}
+            </div>
+          </div>
 
           {/* Fragments */}
           <div className="glass-panel hud-scanline rounded-2xl p-5"
             style={{ border: '1px solid rgba(249,189,34,0.15)' }}>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#00f0ff' }}>
-                Fragmentos del Guardián
-              </p>
-              <span className="text-xs font-bold tabular-nums" style={{ color: '#f9bd22' }}>
+              <div className="relative group hover:z-50">
+                <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#00f0ff' }}>
+                  Fragmentos del Guardián
+                </p>
+                <Tooltip text="Cada capítulo esconde un fragmento del Guardián. Reúnelos todos para completar la leyenda." align="left" />
+              </div>
+              <span className="relative group hover:z-50 text-xs font-bold tabular-nums" style={{ color: '#f9bd22' }}>
                 {dashboard.earnedFragments.length} / {chapters.length}
+                <Tooltip text={`Has reunido ${dashboard.earnedFragments.length} de ${chapters.length} fragmentos.`} align="right" />
               </span>
             </div>
             <div className="grid grid-cols-5 gap-3">
-              {chapters.map(ch => {
+              {chapters.map((ch, i) => {
                 const earned = ch.fragmentId ? dashboard.earnedFragments.includes(ch.fragmentId) : false
+                const col = i % 5
+                const tipAlign = col === 0 ? 'left' : col === 4 ? 'right' : 'center'
+                const tipText = ch.fragmentName
+                  ? earned
+                    ? `${ch.fragmentName} — ¡conseguido! Lo ganaste al completar el capítulo «${ch.title}».`
+                    : `${ch.fragmentName} — bloqueado. Completa el capítulo «${ch.title}» para obtenerlo.`
+                  : 'Fragmento bloqueado. Avanza en la historia para descubrirlo.'
                 return (
-                  <div key={ch.id} className="flex flex-col items-center gap-1.5">
+                  <div key={ch.id} className="relative group hover:z-50 flex flex-col items-center gap-1.5">
                     <div className="w-full aspect-square rounded-2xl flex items-center justify-center relative"
                       style={{
                         background: earned ? `${ch.color}22` : 'rgba(255,255,255,0.04)',
@@ -227,6 +297,7 @@ export default function StudentPanelPage() {
                       style={{ fontSize: 9, fontFamily: 'var(--font-exo2), sans-serif', color: earned ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)' }}>
                       {ch.fragmentName ? ch.fragmentName.replace('Fragmento ', '') : 'Bloqueado'}
                     </p>
+                    <Tooltip text={tipText} align={tipAlign} />
                   </div>
                 )
               })}
@@ -247,19 +318,28 @@ export default function StudentPanelPage() {
           {/* Chapter progress */}
           <div className="glass-panel hud-scanline rounded-2xl p-5"
             style={{ border: '1px solid rgba(0,240,255,0.12)' }}>
-            <p className="text-xs uppercase tracking-widest font-bold mb-4" style={{ color: '#00f0ff' }}>
-              Progreso por Capítulo
-            </p>
+            <div className="relative group hover:z-50 inline-block mb-4">
+              <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#00f0ff' }}>
+                Progreso por Capítulo
+              </p>
+              <Tooltip text="Avance de tu equipo en cada capítulo de la historia. Los capítulos bloqueados se abren al avanzar." align="left" />
+            </div>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               {chapters.map(ch => {
                 const pct = ch.total > 0 ? Math.round((ch.completed / ch.total) * 100) : 0
                 return (
-                  <div key={ch.id} className="rounded-2xl px-4 py-3"
+                  <div key={ch.id} className="relative group hover:z-50 rounded-2xl px-4 py-3"
                     style={{
                       background: ch.locked ? 'rgba(255,255,255,0.02)' : 'rgba(0,240,255,0.03)',
                       border: ch.locked ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,240,255,0.12)',
                       opacity: ch.locked ? 0.5 : 1,
                     }}>
+                    <Tooltip
+                      text={ch.locked
+                        ? `«${ch.title}» está bloqueado. Completa el capítulo anterior para desbloquearlo.`
+                        : `«${ch.title}»: ${ch.completed} de ${ch.total} misiones completadas (${pct}%).`}
+                      align="left"
+                    />
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {ch.locked
