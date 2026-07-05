@@ -61,6 +61,7 @@ export interface Database {
           name: string
           color: string | null
           points: number
+          last_completed_at: string | null
           created_at: string
           updated_at: string | null
           deleted_at: string | null
@@ -76,6 +77,7 @@ export interface Database {
           school_id: string
           points: number | null
           level: number | null
+          last_completed_at: string | null
           created_at: string
           updated_at: string | null
           deleted_at: string | null

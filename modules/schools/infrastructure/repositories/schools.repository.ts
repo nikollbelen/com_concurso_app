@@ -12,8 +12,10 @@ interface SchoolRow {
 }
 
 /**
- * Ranking de colegios ordenado por puntos (desc). La posición se calcula
- * a partir del orden. `totalTeams` sale del conteo de equipos anidados.
+ * Ranking de colegios ordenado por puntos (desc). Desempate: cuando dos colegios
+ * tienen los mismos puntos, va más arriba el que completó ANTES su última misión
+ * (`last_completed_at` asc; los que aún no puntúan quedan al final). La posición
+ * se calcula a partir del orden. `totalTeams` sale del conteo de equipos anidados.
  */
 export async function getSchoolRanking(): Promise<SchoolRanking[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,6 +23,7 @@ export async function getSchoolRanking(): Promise<SchoolRanking[]> {
     .from('schools')
     .select('id, name, short, color, points, missions_completed, teams ( id )')
     .order('points', { ascending: false })
+    .order('last_completed_at', { ascending: true, nullsFirst: false })
 
   if (error) throw new Error(`getSchoolRanking: ${error.message}`)
 
@@ -113,7 +116,12 @@ export async function getSchoolsDetail(): Promise<SchoolDetail[]> {
     .select(
       'id, name, color, points, missions_completed, teams ( id, name, level, levels ( title ), points, missions_completed, leader_id ), usuarios ( id, nombre, apellidos, role_id, team_id )',
     )
+    // Colegios: puntos desc, y a igualdad de puntos el que completó antes su última misión.
     .order('points', { ascending: false })
+    .order('last_completed_at', { ascending: true, nullsFirst: false })
+    // Equipos anidados: mismo criterio de ranking dentro de cada colegio.
+    .order('points', { referencedTable: 'teams', ascending: false })
+    .order('last_completed_at', { referencedTable: 'teams', ascending: true, nullsFirst: false })
 
   if (error) throw new Error(`getSchoolsDetail: ${error.message}`)
 

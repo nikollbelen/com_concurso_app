@@ -25,11 +25,13 @@ export function AdminBottomSheet() {
   useEffect(() => {
     const fetchAdminMetrics = async () => {
       try {
-        // Consultamos la tabla 'schools' ordenando por puntos descendente
+        // Consultamos la tabla 'schools' ordenando por puntos descendente.
+        // Desempate: a igualdad de puntos, sube el que completó antes su última misión.
         const { data, error } = await supabase
           .from('schools')
           .select('id, name, points, missions_completed, teams(id)')
           .order('points', { ascending: false })
+          .order('last_completed_at', { ascending: true, nullsFirst: false })
 
         if (error) throw error
 

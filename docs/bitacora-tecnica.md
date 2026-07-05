@@ -7,6 +7,18 @@ Los refactors grandes y cambios de arquitectura tienen su propio archivo en `doc
 
 ---
 
+## 2026-07-05 — Ranking: desempate por última misión completada
+
+Cuando dos colegios/equipos tienen los mismos puntos, sube el que **completó antes
+su última misión**. Nueva columna `last_completed_at` en `teams` y `schools`
+(sellada por el trigger `actualizar_estadisticas_mision` al aprobar cada misión) y
+orden `points DESC, last_completed_at ASC NULLS LAST` en `getSchoolRanking`,
+`getSchoolsDetail` (colegios y equipos anidados) y `AdminBottomSheet`. Detalle en
+`ranking-desempate-ultima-mision.md`. Migración `20260705000004`. Verificado en BD
+local (orden + trigger, con ROLLBACK).
+
+---
+
 ## 2026-07-02 — Página principal, hadas y tablero en vivo
 
 Detalle en `migracion-capa-datos-supabase.md` (sección "Continuación").

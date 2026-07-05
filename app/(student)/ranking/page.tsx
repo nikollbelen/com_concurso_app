@@ -116,12 +116,10 @@ export default function RankingPage() {
   const hasSchool     = user.schoolId != null               // el admin no tiene colegio
   const myPos = hasSchool ? (schools.find(s => s.id === user.schoolId)?.pos ?? null) : null
   const topXp = schools.length > 0 ? schools[0].points : 0
-  const totalMissions = schools.reduce((a, s) => a + s.missions, 0)
   const top3 = rankedSchools.length >= 3 ? [rankedSchools[1], rankedSchools[0], rankedSchools[2]] : []
 
   const summaryStats: { label: string; value: string | number; color: string }[] = [
     { label: 'Colegios', value: schools.length, color: '#00f0ff' },
-    { label: 'Misiones completadas', value: totalMissions, color: '#00e676' },
     { label: 'XP líder', value: hasStarted ? topXp.toLocaleString('es-PE') : '—', color: '#f9bd22' },
     ...(hasSchool ? [{ label: 'Tu posición', value: myPos != null ? `#${myPos}` : '—', color: '#00f0ff' }] : []),
   ]
@@ -142,11 +140,6 @@ export default function RankingPage() {
         </div>
 
         <div className="hidden md:flex items-center gap-5 mr-4">
-          <div className="text-center">
-            <p className="text-lg font-black tabular-nums" style={{ color: '#00f0ff' }}>{totalMissions}</p>
-            <p className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>misiones completadas</p>
-          </div>
-          <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.1)' }} />
           <div className="text-center">
             <p className="text-lg font-black tabular-nums" style={{ color: '#f9bd22' }}>{schools.length}</p>
             <p className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>colegios</p>
@@ -216,7 +209,7 @@ export default function RankingPage() {
             <p className="text-[10px] uppercase tracking-widest font-bold mb-3" style={{ color: '#00f0ff' }}>Resumen del evento</p>
             {loading ? (
               <div className="grid grid-cols-2 gap-3">
-                {[1, 2, 3, 4].map(i => (
+                {summaryStats.map((_, i) => (
                   <Skeleton key={i} className="h-[60px]" />
                 ))}
               </div>
