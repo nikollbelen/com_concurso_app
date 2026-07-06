@@ -53,3 +53,39 @@ Tres consultas simultáneas:
 
 - Trigger DB `trigger_mision_completada` actualiza points/level automáticamente
 - Vista `vista_equipos_completos` debe tener GRANT SELECT para authenticated
+
+---
+
+## Actualización (2026-07-05): panel docente multi-equipo
+
+Un docente puede liderar **uno o más** equipos. Antes el panel resolvía "el equipo del
+docente" por `usuarios.team_id`, pero esa columna es la relación **alumno↔equipo**, no
+la de líder. El panel ahora resuelve los equipos por **`teams.leader_id = <id del docente>`**.
+
+### Cambios en la capa de datos
+[`mission-progress.repository.ts`](../modules/missions/infrastructure/repositories/mission-progress.repository.ts):
+
+- `getReviewData(teamId)` → **`getLeaderReviewData(leaderId)`**: devuelve un bloque
+  `LeaderTeamReview` por **cada** equipo liderado (info del equipo + evidencias en
+  revisión + nº de aprobadas), ordenado por nombre de equipo. Devuelve `[]` si el
+  docente no lidera ninguno.
+  1. `SELECT id FROM teams WHERE leader_id = <docente>` (no `usuarios.team_id`).
+  2. En paralelo, con `.in('team_id', teamIds)`: `vista_equipos_completos`, evidencias
+     en `review` y conteo de `completed`; luego se agrupa por equipo en memoria.
+- La interfaz `ReviewData` se reemplaza por `LeaderTeamReview` (bloque por equipo).
+
+### Cambios en hooks
+[`useReviewData.ts`](../modules/missions/presentation/hooks/useReviewData.ts):
+
+- `useReviewData(teamId)` → **`useLeaderReviewData(leaderId)`** (queryKey `['leader-review-data', leaderId]`).
+- `useSetMissionStatus(teamId)` → **`useLeaderSetMissionStatus(leaderId)`**: al aprobar/
+  rechazar invalida todos los equipos del docente.
+
+### Cambios en la UI
+[`app/leader/panel/page.tsx`](../app/leader/panel/page.tsx): renderiza un bloque por
+equipo liderado; ya no asume un único equipo. (Se eliminó el botón "Ver mapa".)
+
+### Seed de prueba
+El seed crea **2 docentes por colegio**: `lider_i_1` lidera los equipos 1 y 2 (caso
+multi-equipo), `lider_i_2` el equipo 3. Los docentes tienen `team_id = NULL`. Cuenta de
+prueba multi-equipo: **`lider_1_1`**. Ver [seed-datos-prueba.md](seed-datos-prueba.md).

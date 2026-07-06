@@ -136,12 +136,18 @@ Usar con: `style={{ fontFamily: 'var(--font-cinzel), serif' }}`
 | `photo` | Manual docente | 15 pts | `Camera` |
 | `creative` | Manual docente/jurado | 20 pts | `Palette` |
 
-## Estados de misión (4 estados)
+> **Variantes de trivia**: una misión de trivia tiene 1..N variantes de pregunta en la tabla `mission_questions`; al empezar la misión se asigna una al azar por equipo (`mission_progression.question_id`) para que equipos del mismo colegio no se copien. `photo`/`creative` usan su prompt único en `missions.question`. Detalle en `docs/variantes-pregunta-trivia.md`.
+
+## Estados de misión
 
 - `available` — rojo pulsante (`#F44336`), Lucide icon por tipo de misión
-- `completed` — verde (`#00E676`), `CheckCircle`
+- `in_progress` — el equipo pulsó "Empezar" y va en camino (comparte la UI de resolución con `available`; solo **una** misión `in_progress` por equipo)
 - `review` — naranja pulsante (`#FF9800`), `Clock`
+- `completed` — verde (`#00E676`), `CheckCircle`
+- `rejected` — evidencia rechazada por el docente
 - `locked` — gris (`#546E7A`), `Lock`
+
+Flujo: `available` → `in_progress` → `review` → `completed` / `rejected`. Tipo canónico en `modules/missions/domain/entities/mission.ts` (`MissionStatus`).
 
 ## Variables de entorno
 

@@ -70,14 +70,21 @@ Los equipos **no llevan color propio**: heredan el color de su colegio vía `sch
 El bloque **no crea colegios**: engancha los usuarios y equipos a los **primeros 5 de los 16 colegios**.
 Cada uno de esos 5 colegios recibe:
 - 1 director
-- 3 equipos (cada uno con 1 leader/profesor + 5 alumnos)
-- Total: **96 usuarios + 15 equipos**, repartidos en 5 colegios (los otros 11 quedan sin equipos, solo en el ranking en 0)
+- **2 docentes** (líderes) — un docente puede liderar **varios** equipos
+- 3 equipos (cada uno con 5 alumnos)
+- Total: **91 usuarios + 15 equipos**, repartidos en 5 colegios (los otros 11 quedan sin equipos, solo en el ranking en 0)
+
+> **Docente multi-equipo (2026-07-05):** el docente es **líder**, no miembro — se le
+> asigna por `teams.leader_id`, **no** por `usuarios.team_id` (esa es la relación
+> alumno↔equipo, y en los docentes queda `NULL`). El primer docente (`lider_i_1`)
+> lidera los equipos 1 y 2 (caso multi-equipo de prueba); el segundo (`lider_i_2`)
+> lidera el equipo 3. Ver [refactor-panel-lider-supabase.md](refactor-panel-lider-supabase.md).
 
 **Alias de login (fijos y sin tildes)** — ver `fix-seed-alias-fijos.md`:
 - `director_<escuela>` (ej. `director_1`)
-- `lider_<escuela>_<equipo>` (ej. `lider_1_2`)
+- `lider_<escuela>_<n>` con `n = 1..2` (ej. `lider_1_1`, `lider_1_2`) — **por docente, no por equipo**
 - `alumno_<escuela>_<equipo>_<n>` (ej. `alumno_1_2_5`)
-- Escuelas 1-5 (con equipos): 1=Independencia · 2=Micaela · 3=San Francisco · 4=La Salle · 5=Honorio
+- Cuenta de prueba multi-equipo: **`lider_1_1`** (lidera 2 equipos).
 - Los nombres/apellidos visibles siguen siendo aleatorios; solo el **alias** es determinista.
 
 ### Progreso e insignias (vacíos)

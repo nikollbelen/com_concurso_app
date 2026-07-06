@@ -12,9 +12,10 @@ import { useMission }      from '@/modules/missions/presentation/hooks/useMissio
 import { useChapters }     from '@/modules/chapters/presentation/hooks/useChapters'
 import { useTeam }         from '@/modules/teams/presentation/hooks/useTeam'
 import { useTeamProgress } from '@/modules/missions/presentation/hooks/useTeamProgress'
+import { useAssignedQuestion } from '@/modules/missions/presentation/hooks/useMissionQuestion'
 import { Tooltip } from '@/shared/ui/components/Tooltip'
 
-type MissionStatus = 'available' | 'completed' | 'review' | 'locked'
+type MissionStatus = 'available' | 'in_progress' | 'completed' | 'review' | 'locked'
 
 const TYPE_CFG = {
   trivia:   { icon: <HelpCircle className="w-4 h-4" />, label: 'Trivia',   color: '#38BDF8', desc: 'Responde correctamente la pregunta' },
@@ -33,6 +34,7 @@ export default function MisionPage() {
   const { data: chapters = [] } = useChapters()
   const { data: team }          = useTeam(user?.teamId)
   const { data: progressData }  = useTeamProgress(user?.teamId)
+  const { data: assignedQuestion } = useAssignedQuestion(user?.teamId, id)
 
   const [selected,  setSelected]  = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -69,9 +71,20 @@ export default function MisionPage() {
   const isLocked = chapter.requiredLevel > teamLevel
   const progress = progressData?.[mission.id] as MissionStatus | undefined
   const status: MissionStatus = isLocked ? 'locked' : progress ?? 'available'
+  // `available` (nunca empezada) e `in_progress` (ya en el lugar) comparten la
+  // misma UI de resolución.
+  const canSolve = status === 'available' || status === 'in_progress'
 
   const typeCfg  = TYPE_CFG[mission.type]
-  const isCorrect = selected === mission.correctAnswer
+
+  // Trivia: usa la VARIANTE asignada al equipo al empezar. Si aún no hay una
+  // (misión no empezada, o BD sin variantes) cae a la pregunta base de la misión.
+  const trivia = assignedQuestion ?? {
+    question: mission.question,
+    options: mission.options,
+    correctAnswer: mission.correctAnswer,
+  }
+  const isCorrect = selected === trivia.correctAnswer
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -164,23 +177,23 @@ export default function MisionPage() {
           </div>
         )}
 
-        {/* ─── STATUS: available — TRIVIA ─── */}
-        {status === 'available' && mission.type === 'trivia' && (
+        {/* ─── STATUS: resolver — TRIVIA ─── */}
+        {canSolve && mission.type === 'trivia' && (
           <>
             <div className="glass-panel hud-scanline rounded-2xl p-4"
               style={{ border: '1px solid rgba(56,189,248,0.2)' }}>
               <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#38BDF8' }}>Pregunta</p>
-              <p className="text-sm font-bold text-white leading-relaxed">{mission.question}</p>
+              <p className="text-sm font-bold text-white leading-relaxed">{trivia.question}</p>
             </div>
 
             <div className="flex flex-col gap-2">
-              {mission.options.map((opt, i) => {
+              {trivia.options.map((opt, i) => {
                 let bg = 'rgba(255,255,255,0.04)'
                 let border = '1px solid rgba(255,255,255,0.1)'
                 let color = 'rgba(255,255,255,0.8)'
                 if (selected === i && !submitted) { bg = 'rgba(0,168,255,0.15)'; border = '1px solid rgba(0,168,255,0.5)'; color = '#fff' }
-                if (submitted && i === mission.correctAnswer) { bg = 'rgba(0,230,118,0.15)'; border = '1px solid rgba(0,230,118,0.5)'; color = '#00e676' }
-                if (submitted && selected === i && i !== mission.correctAnswer) { bg = 'rgba(255,59,48,0.15)'; border = '1px solid rgba(255,59,48,0.5)'; color = '#ff6b6b' }
+                if (submitted && i === trivia.correctAnswer) { bg = 'rgba(0,230,118,0.15)'; border = '1px solid rgba(0,230,118,0.5)'; color = '#00e676' }
+                if (submitted && selected === i && i !== trivia.correctAnswer) { bg = 'rgba(255,59,48,0.15)'; border = '1px solid rgba(255,59,48,0.5)'; color = '#ff6b6b' }
                 return (
                   <button key={i} onClick={() => !submitted && setSelected(i)} disabled={submitted}
                     className="w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 transition-all"
@@ -190,7 +203,7 @@ export default function MisionPage() {
                       {String.fromCharCode(65 + i)}
                     </span>
                     <span className="text-sm font-semibold">{opt}</span>
-                    {submitted && i === mission.correctAnswer && <CheckCircle className="w-4 h-4 ml-auto shrink-0" style={{ color: '#00e676' }} />}
+                    {submitted && i === trivia.correctAnswer && <CheckCircle className="w-4 h-4 ml-auto shrink-0" style={{ color: '#00e676' }} />}
                   </button>
                 )
               })}
@@ -210,7 +223,7 @@ export default function MisionPage() {
                   {isCorrect ? '¡Correcto!' : 'Incorrecto'}
                 </p>
                 <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  {isCorrect ? `+${mission.points} XP añadidos a tu equipo` : `La respuesta correcta era: ${mission.options[mission.correctAnswer]}`}
+                  {isCorrect ? `+${mission.points} XP añadidos a tu equipo` : `La respuesta correcta era: ${trivia.options[trivia.correctAnswer]}`}
                 </p>
                 <div className="flex gap-3">
                   {!isCorrect && (
@@ -231,8 +244,8 @@ export default function MisionPage() {
           </>
         )}
 
-        {/* ─── STATUS: available — PHOTO ─── */}
-        {status === 'available' && mission.type === 'photo' && (
+        {/* ─── STATUS: resolver — PHOTO ─── */}
+        {canSolve && mission.type === 'photo' && (
           <>
             <div className="glass-panel hud-scanline rounded-2xl p-4"
               style={{ border: '1px solid rgba(192,132,252,0.2)' }}>
@@ -278,8 +291,8 @@ export default function MisionPage() {
           </>
         )}
 
-        {/* ─── STATUS: available — CREATIVE ─── */}
-        {status === 'available' && mission.type === 'creative' && (
+        {/* ─── STATUS: resolver — CREATIVE ─── */}
+        {canSolve && mission.type === 'creative' && (
           <>
             <div className="glass-panel hud-scanline rounded-2xl p-4"
               style={{ border: '1px solid rgba(244,114,182,0.2)' }}>

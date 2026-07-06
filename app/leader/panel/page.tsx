@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BookOpen, Clock, CheckCircle, XCircle, Users, LogOut, Map, Loader2, AlertTriangle } from 'lucide-react'
+import { BookOpen, Clock, CheckCircle, XCircle, Users, LogOut, Loader2, AlertTriangle, Shield } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
-import { useReviewData, useSetMissionStatus } from '@/modules/missions/presentation/hooks/useReviewData'
+import { useLeaderReviewData, useLeaderSetMissionStatus } from '@/modules/missions/presentation/hooks/useReviewData'
 
 export default function LeaderPanelPage() {
   const router = useRouter()
   const { user, isHydrated, hydrate, logout } = useAuthStore()
   const [confirmLogout, setConfirmLogout] = useState(false)
 
-  const teamId = user?.teamId
-  const { data, isLoading, isError, refetch } = useReviewData(teamId)
-  const setStatus = useSetMissionStatus(teamId)
+  const leaderId = user?.id
+  const { data, isLoading, isError, refetch } = useLeaderReviewData(leaderId)
+  const setStatus = useLeaderSetMissionStatus(leaderId)
 
   useEffect(() => { hydrate() }, [hydrate])
   useEffect(() => {
@@ -36,32 +36,6 @@ export default function LeaderPanelPage() {
     )
   }
   if (!user || user.role !== 'leader') return null
-
-  if (teamId == null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#0d1117' }}>
-        <div
-          className="glass-panel hud-scanline rounded-3xl p-8 max-w-md text-center"
-          style={{ border: '1px solid rgba(255,149,0,0.2)' }}
-        >
-          <AlertTriangle className="w-12 h-12 mx-auto mb-4" style={{ color: '#FF9800' }} />
-          <p className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
-            Acceso Restringido
-          </p>
-          <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Aún no has sido asignado a un equipo. Espera a que dirección/admin te asigne a una escuadra para comenzar a gestionar misiones.
-          </p>
-          <button
-            onClick={() => { logout(); router.replace('/login') }}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
-          >
-            Volver al inicio
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   if (isLoading) {
     return (
@@ -91,10 +65,39 @@ export default function LeaderPanelPage() {
     )
   }
 
-  const teamData = data?.team ?? null
-  const pendingMissions = data?.pending ?? []
-  const missionsApprovedCount = data?.approvedCount ?? 0
-  const memberCount = teamData?.members?.length ?? 0
+  const teams = data ?? []
+
+  /* Sin equipos asignados: el docente aún no lidera ninguna escuadra */
+  if (teams.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#0d1117' }}>
+        <div
+          className="glass-panel hud-scanline rounded-3xl p-8 max-w-md text-center"
+          style={{ border: '1px solid rgba(255,149,0,0.2)' }}
+        >
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4" style={{ color: '#FF9800' }} />
+          <p className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+            Sin equipos asignados
+          </p>
+          <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Aún no lideras ninguna escuadra. Espera a que dirección/admin te asigne uno o más equipos para comenzar a revisar evidencias.
+          </p>
+          <button
+            onClick={() => { logout(); router.replace('/login') }}
+            className="px-6 py-2.5 rounded-xl text-sm font-bold"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  /* Agregados de todos los equipos que lidera el docente */
+  const totalPending  = teams.reduce((n, t) => n + t.pending.length, 0)
+  const totalApproved = teams.reduce((n, t) => n + t.approvedCount, 0)
+  const totalStudents = teams.reduce((n, t) => n + (t.team.members?.length ?? 0), 0)
 
   return (
     <div className="min-h-screen" style={{ background: '#0d1117', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -113,37 +116,29 @@ export default function LeaderPanelPage() {
           <div>
             <p className="text-[10px] uppercase tracking-widest" style={{ color: '#a855f7' }}>Panel Docente</p>
             <p className="text-sm font-bold text-white">{user.name}</p>
-            {teamData?.schoolName && (
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{teamData.schoolName}</p>
+            {user.schoolName && (
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{user.schoolName}</p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.push('/mapa')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-            style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)', color: '#00f0ff' }}
-          >
-            <Map className="w-3.5 h-3.5" /> Ver mapa
-          </button>
-          <button
-            onClick={() => setConfirmLogout(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
-          >
-            <LogOut className="w-3.5 h-3.5" /> Salir
-          </button>
-        </div>
+        <button
+          onClick={() => setConfirmLogout(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+        >
+          <LogOut className="w-3.5 h-3.5" /> Salir
+        </button>
       </div>
 
       <div className="p-5 max-w-6xl mx-auto">
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        {/* Stats agregadas de todos los equipos que lidera */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'En revisión', value: pendingMissions.length, color: '#FF9800', icon: <Clock className="w-5 h-5" /> },
-            { label: 'Equipo activo', value: memberCount, color: '#00f0ff', icon: <Users className="w-5 h-5" /> },
-            { label: 'Aprobadas', value: missionsApprovedCount, color: '#00E676', icon: <CheckCircle className="w-5 h-5" /> },
-            { label: 'Nivel', value: teamData?.level ?? '—', color: '#a855f7', icon: <BookOpen className="w-5 h-5" /> },
+            { label: 'Equipos', value: teams.length, color: '#a855f7', icon: <Shield className="w-5 h-5" /> },
+            { label: 'En revisión', value: totalPending, color: '#FF9800', icon: <Clock className="w-5 h-5" /> },
+            { label: 'Aprobadas', value: totalApproved, color: '#00E676', icon: <CheckCircle className="w-5 h-5" /> },
+            { label: 'Alumnos', value: totalStudents, color: '#00f0ff', icon: <Users className="w-5 h-5" /> },
           ].map((s) => (
             <div
               key={s.label}
@@ -159,113 +154,98 @@ export default function LeaderPanelPage() {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_340px] gap-5">
+        {/* Una sección por equipo liderado */}
+        <div className="flex flex-col gap-6">
+          {teams.map(({ team, pending, approvedCount }) => {
+            const accent = team.color ?? '#a855f7'
+            return (
+              <section key={team.teamId}>
 
-          <div>
-            <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#00f0ff' }}>
-              Evidencias pendientes
-            </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
-              {pendingMissions.map((m) => (
+                {/* Cabecera del equipo */}
                 <div
-                  key={m.id}
-                  className="glass-panel hud-scanline rounded-2xl p-4"
-                  style={{ border: '1px solid rgba(255,149,0,0.2)' }}
+                  className="glass-panel hud-scanline rounded-2xl p-4 mb-3 flex items-center justify-between gap-3 flex-wrap"
+                  style={{ border: `1px solid ${accent}40`, borderLeft: `4px solid ${accent}` }}
                 >
-                  {m.photo && (
-                    <img
-                      src={m.photo}
-                      alt="Evidencia"
-                      className="w-full h-36 object-cover rounded-xl mb-3"
-                      style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                    />
-                  )}
-                  <p className="text-sm font-bold text-white mb-0.5">{m.missionTitle}</p>
-                  <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {teamData?.teamName} · {m.missionPoints ?? '?'} pts
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleApprove(m.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider"
-                      style={{ background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', boxShadow: '0 4px 0 rgba(0,0,0,0.2)' }}
+                  <div className="min-w-0">
+                    <p className="text-base font-bold text-white truncate" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+                      {team.teamName}
+                    </p>
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      {team.schoolName} · {team.members?.length ?? 0} alumnos · Nivel {team.level ?? '?'}
+                      {team.points != null && ` · ${team.points} XP`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+                      style={{ background: 'rgba(255,149,0,0.12)', border: '1px solid rgba(255,149,0,0.3)', color: '#FF9800' }}
                     >
-                      <CheckCircle className="w-3.5 h-3.5" /> Aprobar
-                    </button>
-                    <button
-                      onClick={() => handleReject(m.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider"
-                      style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)', color: '#ff6b6b' }}
+                      <Clock className="w-3.5 h-3.5" /> {pending.length} pendientes
+                    </span>
+                    <span
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+                      style={{ background: 'rgba(0,230,118,0.1)', border: '1px solid rgba(0,230,118,0.25)', color: '#00E676' }}
                     >
-                      <XCircle className="w-3.5 h-3.5" /> Rechazar
-                    </button>
+                      <CheckCircle className="w-3.5 h-3.5" /> {approvedCount} aprobadas
+                    </span>
                   </div>
                 </div>
-              ))}
 
-              {pendingMissions.length === 0 && (
-                <div
-                  className="glass-panel hud-scanline rounded-2xl p-6 text-center sm:col-span-2"
-                  style={{ border: '1px solid rgba(0,230,118,0.2)' }}
-                >
-                  <CheckCircle className="w-8 h-8 mx-auto mb-2" style={{ color: '#00E676' }} />
-                  <p className="text-sm font-bold text-white">Todo al día</p>
-                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>No hay evidencias pendientes</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#00f0ff' }}>
-              Tu equipo
-            </p>
-
-            <div
-              className="glass-panel hud-scanline rounded-2xl p-4"
-              style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                Equipo asignado
-              </p>
-              <p className="text-sm font-bold text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
-                {teamData?.teamName ?? '—'}
-              </p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {memberCount} alumnos · Nivel {teamData?.level ?? '?'}
-                {teamData?.points != null && ` · ${teamData.points} XP`}
-              </p>
-            </div>
-
-            {teamData?.members && teamData.members.length > 0 && (
-              <div
-                className="glass-panel hud-scanline rounded-2xl p-4"
-                style={{ border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  Integrantes
-                </p>
-                <div className="space-y-2">
-                  {teamData.members.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between">
-                      <span className="text-sm text-white">{m.name}</span>
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>@{m.alias}</span>
+                {/* Evidencias pendientes del equipo */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {pending.map((m) => (
+                    <div
+                      key={m.id}
+                      className="glass-panel hud-scanline rounded-2xl p-4"
+                      style={{ border: '1px solid rgba(255,149,0,0.2)' }}
+                    >
+                      {m.photo && (
+                        <img
+                          src={m.photo}
+                          alt="Evidencia"
+                          className="w-full h-36 object-cover rounded-xl mb-3"
+                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        />
+                      )}
+                      <p className="text-sm font-bold text-white mb-0.5">{m.missionTitle}</p>
+                      <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        {m.missionPoints ?? '?'} pts
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApprove(m.id)}
+                          disabled={setStatus.isPending}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                          style={{ background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', boxShadow: '0 4px 0 rgba(0,0,0,0.2)' }}
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Aprobar
+                        </button>
+                        <button
+                          onClick={() => handleReject(m.id)}
+                          disabled={setStatus.isPending}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                          style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)', color: '#ff6b6b' }}
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Rechazar
+                        </button>
+                      </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
 
-            <div
-              className="glass-panel hud-scanline rounded-2xl p-4"
-              style={{ border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <p className="text-sm font-bold text-white mb-1">Más funciones próximamente</p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                Historial de aprobaciones, mensajes al equipo, progreso por misión
-              </p>
-            </div>
-          </div>
+                  {pending.length === 0 && (
+                    <div
+                      className="glass-panel hud-scanline rounded-2xl p-6 text-center sm:col-span-2 lg:col-span-3"
+                      style={{ border: '1px solid rgba(0,230,118,0.2)' }}
+                    >
+                      <CheckCircle className="w-8 h-8 mx-auto mb-2" style={{ color: '#00E676' }} />
+                      <p className="text-sm font-bold text-white">Todo al día</p>
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Este equipo no tiene evidencias pendientes</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )
+          })}
         </div>
       </div>
 

@@ -44,6 +44,29 @@ GRANT USAGE ON SCHEMA public + EXECUTE del hook a `supabase_auth_admin`. Revoca 
 ### 10. `20260623000000_grant_select.sql`
 `GRANT SELECT ON vista_equipos_completos TO authenticated` y `TO anon`.
 
+### 11. `20260705000000_levels_catalog.sql`
+Catálogo de niveles y lógica de progresión de equipos. Detalle en [catalogo-niveles.md](catalogo-niveles.md).
+
+### 12. `20260705000001_mission_in_progress.sql`
+Añade el estado `in_progress` a `mission_progression` (el alumno pulsó "Empezar misión"
+y va en camino al lugar físico, antes de enviar evidencia).
+
+### 13. `20260705000002_app_settings.sql`
+Tabla `app_settings` (configuración global del evento; p. ej. si el concurso ya comenzó).
+
+### 14. `20260705000003_one_active_mission_per_team.sql`
+Índice único que garantiza **una sola misión activa (`in_progress`) por equipo**.
+
+### 15. `20260705000004_ranking_tiebreak_last_completed.sql`
+Desempate de ranking por última misión completada (colegios y equipos). Detalle en
+[ranking-desempate-ultima-mision.md](ranking-desempate-ultima-mision.md).
+
+### 16. `20260705000005_mission_question_variants.sql`
+Tabla `mission_questions` (1..N variantes de pregunta por misión de trivia) + columna
+`mission_progression.question_id` (variante asignada al equipo) + backfill idempotente
+de las trivias existentes a su variante #1. Detalle en
+[variantes-pregunta-trivia.md](variantes-pregunta-trivia.md).
+
 ## Tablas principales
 
 | Tabla | Propósito |
@@ -53,7 +76,8 @@ GRANT USAGE ON SCHEMA public + EXECUTE del hook a `supabase_auth_admin`. Revoca 
 | `schools` | Colegios con points, missions_completed, short, color |
 | `teams` | Equipos con leader_id, points, level, next_level_points |
 | `missions` | Definiciones de misión con question, options, type, location |
-| `mission_progression` | Progreso por equipo (team_id, mission_id, status TEXT, photo) |
+| `mission_questions` | Variantes de pregunta (1..N por trivia); se asigna una al azar por equipo |
+| `mission_progression` | Progreso por equipo (team_id, mission_id, status TEXT, photo, question_id) |
 | `chapters` | Capítulos narrativos con number, required_level, id_fragment |
 | `fragments` | Fragmentos coleccionables (5, uno por capítulo) |
 
@@ -71,4 +95,7 @@ GRANT USAGE ON SCHEMA public + EXECUTE del hook a `supabase_auth_admin`. Revoca 
 
 ## Estados de misión
 
-`available` → `review` (alumno envía) → `completed` o `rejected` (docente aprueba/rechaza). También `locked` para misiones bloqueadas por capítulo no disponible.
+`available` → `in_progress` (alumno pulsó "Empezar" y va en camino) → `review`
+(alumno envía evidencia) → `completed` o `rejected` (docente aprueba/rechaza). También
+`locked` para misiones bloqueadas por capítulo no disponible. Solo puede haber **una
+misión `in_progress` por equipo** (índice único, migración #14).

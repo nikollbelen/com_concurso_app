@@ -128,6 +128,7 @@ DECLARE
   v_dummy_hash text := extensions.crypt('secreto123', extensions.gen_salt('bf'));
   v_nombre text; v_apellido text; v_alias text; v_email text;
   v_school_id uuid; v_team_id bigint; v_leader_id uuid; v_student_id uuid; v_director_id uuid;
+  v_leader_ids uuid[];   -- docentes del colegio (un docente puede liderar varios equipos)
   -- Se enganchan los equipos/usuarios a los primeros 5 de los 16 colegios ya insertados
   v_school_ids uuid[] := ARRAY[
     'e0000000-0000-0000-0000-000000000001',
@@ -157,23 +158,35 @@ BEGIN
       INSERT INTO public.usuarios (id, alias, nombre, apellidos, role_id, school_id) VALUES (v_director_id, v_alias, v_nombre, v_apellido, v_role_director, v_school_id)
       ON CONFLICT (id) DO UPDATE SET alias = EXCLUDED.alias, nombre = EXCLUDED.nombre, apellidos = EXCLUDED.apellidos, role_id = EXCLUDED.role_id, school_id = EXCLUDED.school_id;
 
-      FOR j IN 1..3 LOOP
-        -- Profesor
+      -- ── Docentes ──────────────────────────────────────────────
+      -- 2 docentes por colegio. El docente es LÍDER, no miembro: NO se le
+      -- asigna team_id (esa columna es la relación de alumno↔equipo).
+      v_leader_ids := ARRAY[]::uuid[];
+      FOR j IN 1..2 LOOP
         v_leader_id := gen_random_uuid();
         v_nombre := v_nombres[floor(random() * array_length(v_nombres, 1) + 1)];
         v_apellido := v_apellidos[floor(random() * array_length(v_apellidos, 1) + 1)];
         v_alias := 'lider_' || i || '_' || j;   -- alias fijo y sin tildes (login estable)
-        v_email := v_alias || '@guardianes.local'; 
-        
+        v_email := v_alias || '@guardianes.local';
+
         -- ¡Corrección! Campos vacíos y metadata
-        INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change) 
+        INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
         VALUES (v_leader_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', v_email, v_dummy_hash, now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '') ON CONFLICT (id) DO NOTHING;
-        
+
         INSERT INTO public.usuarios (id, alias, nombre, apellidos, role_id, school_id) VALUES (v_leader_id, v_alias, v_nombre, v_apellido, v_role_leader, v_school_id)
-        ON CONFLICT (id) DO UPDATE SET alias = EXCLUDED.alias, nombre = EXCLUDED.nombre, apellidos = EXCLUDED.apellidos, role_id = EXCLUDED.role_id, school_id = EXCLUDED.school_id;
+        ON CONFLICT (id) DO UPDATE SET alias = EXCLUDED.alias, nombre = EXCLUDED.nombre, apellidos = EXCLUDED.apellidos, role_id = EXCLUDED.role_id, school_id = EXCLUDED.school_id, team_id = NULL;
+
+        v_leader_ids := array_append(v_leader_ids, v_leader_id);
+      END LOOP;
+
+      -- ── Equipos ───────────────────────────────────────────────
+      -- 3 equipos por colegio. El primer docente (lider_i_1) lidera los equipos
+      -- 1 y 2; el segundo docente (lider_i_2) lidera el equipo 3. Así lider_i_1
+      -- demuestra el caso multi-equipo (un docente con varias escuadras).
+      FOR j IN 1..3 LOOP
+        v_leader_id := v_leader_ids[CASE WHEN j <= 2 THEN 1 ELSE 2 END];
 
         INSERT INTO public.teams (name, leader_id, school_id, points, level) VALUES ('Equipo '||j||' Esc '||i, v_leader_id, v_school_id, 0, 1) RETURNING id INTO v_team_id;
-        UPDATE public.usuarios SET team_id = v_team_id WHERE id = v_leader_id;
 
         -- Alumnos
         FOR k IN 1..5 LOOP
@@ -181,15 +194,101 @@ BEGIN
           v_nombre := v_nombres[floor(random() * array_length(v_nombres, 1) + 1)];
           v_apellido := v_apellidos[floor(random() * array_length(v_apellidos, 1) + 1)];
           v_alias := 'alumno_' || i || '_' || j || '_' || k;   -- alias fijo y sin tildes (login estable)
-          v_email := v_alias || '@guardianes.local'; 
-          
+          v_email := v_alias || '@guardianes.local';
+
           -- ¡Corrección! Campos vacíos y metadata
-          INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change) 
+          INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
           VALUES (v_student_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', v_email, v_dummy_hash, now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '') ON CONFLICT (id) DO NOTHING;
-          
+
           INSERT INTO public.usuarios (id, alias, nombre, apellidos, role_id, school_id, team_id) VALUES (v_student_id, v_alias, v_nombre, v_apellido, v_role_student, v_school_id, v_team_id)
           ON CONFLICT (id) DO UPDATE SET alias = EXCLUDED.alias, nombre = EXCLUDED.nombre, apellidos = EXCLUDED.apellidos, role_id = EXCLUDED.role_id, school_id = EXCLUDED.school_id, team_id = EXCLUDED.team_id;
         END LOOP;
       END LOOP;
     END LOOP;
 END $$;
+
+-- =================================================================================
+-- 5. VARIANTES DE PREGUNTA POR TRIVIA (anti-copia entre equipos del mismo colegio)
+-- ---------------------------------------------------------------------------------
+-- Cada trivia tiene varias variantes; al empezar la misión se asigna una al azar
+-- por equipo (ver migración 20260705000005 + startMission). Copiar "la respuesta"
+-- deja de servir porque cada equipo puede responder algo distinto.
+--
+-- Vive en el SEED y no en la migración a propósito: en `db reset` las migraciones
+-- corren ANTES del seed, cuando aún no existen las misiones; el seed corre después,
+-- así que aquí las misiones ya existen para el FK. Todo idempotente
+-- (NOT EXISTS por mission_id+question): re-ejecutable sin duplicar.
+-- =================================================================================
+
+-- 5.1 Variante base = la pregunta original de cada trivia (reproduce el backfill
+--     de la migración para que un `db reset` la recree igual).
+INSERT INTO public.mission_questions (mission_id, question, options, correct_answer)
+SELECT m.id, m.question, m.options, m.correct_answer
+FROM public.missions m
+WHERE m.type = 'trivia' AND m.question IS NOT NULL AND m.options IS NOT NULL AND m.correct_answer IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM public.mission_questions q WHERE q.mission_id = m.id AND q.question = m.question);
+
+-- 5.2 Variantes adicionales (2 por trivia). Respuesta correcta rotada entre A/B/C/D.
+INSERT INTO public.mission_questions (mission_id, question, options, correct_answer)
+SELECT v.mission_id::uuid, v.question, v.options::json, v.correct_answer
+FROM (VALUES
+  -- ── Capítulo I: El Secreto del Sillar ──
+  ('81111111-1111-1111-1111-111111111111', '¿Qué material predomina en los portales y edificios históricos que rodean la Plaza de Armas?', '[{"label":"A","text":"Ladrillo cocido"},{"label":"B","text":"Sillar, piedra volcánica blanca"},{"label":"C","text":"Madera tallada"},{"label":"D","text":"Mármol importado"}]', 'B'),
+  ('81111111-1111-1111-1111-111111111111', 'La Plaza de Armas de Arequipa está rodeada en tres de sus lados por:', '[{"label":"A","text":"Portales con arquerías de sillar"},{"label":"B","text":"Edificios modernos de vidrio"},{"label":"C","text":"Murallas medievales"},{"label":"D","text":"Amplios jardines botánicos"}]', 'A'),
+
+  ('81111111-1111-1111-1111-111111111112', 'La Basílica Catedral de Arequipa ocupa por completo uno de los lados de la Plaza de Armas. ¿Cuál?', '[{"label":"A","text":"El lado sur"},{"label":"B","text":"El lado este"},{"label":"C","text":"El lado norte"},{"label":"D","text":"El centro de la plaza"}]', 'C'),
+  ('81111111-1111-1111-1111-111111111112', 'La fachada de la Catedral de Arequipa está construida principalmente en:', '[{"label":"A","text":"Concreto armado"},{"label":"B","text":"Sillar"},{"label":"C","text":"Adobe"},{"label":"D","text":"Granito"}]', 'B'),
+
+  ('81111111-1111-1111-1111-111111111113', 'Los tallados de los Claustros de la Compañía combinan motivos europeos con elementos:', '[{"label":"A","text":"Asiáticos"},{"label":"B","text":"Africanos"},{"label":"C","text":"Nórdicos"},{"label":"D","text":"Andinos, como flora y fauna local"}]', 'D'),
+  ('81111111-1111-1111-1111-111111111113', '¿En qué material están labrados los relieves de los Claustros de la Compañía?', '[{"label":"A","text":"Sillar"},{"label":"B","text":"Bronce"},{"label":"C","text":"Madera"},{"label":"D","text":"Yeso"}]', 'A'),
+
+  ('81111111-1111-1111-1111-111111111114', 'La portada de la Iglesia de la Compañía es un ejemplo destacado del estilo:', '[{"label":"A","text":"Barroco mestizo o andino"},{"label":"B","text":"Gótico"},{"label":"C","text":"Neoclásico puro"},{"label":"D","text":"Moderno"}]', 'A'),
+  ('81111111-1111-1111-1111-111111111114', 'La Iglesia de la Compañía de Arequipa fue levantada por la orden religiosa:', '[{"label":"A","text":"Franciscana"},{"label":"B","text":"Dominica"},{"label":"C","text":"Jesuita, la Compañía de Jesús"},{"label":"D","text":"Agustina"}]', 'C'),
+
+  -- ── Capítulo II: Las Huellas del Misti ──
+  ('82222222-2222-2222-2222-222222222221', '¿En qué material están construidos los característicos arcos del Mirador de Yanahuara?', '[{"label":"A","text":"Ladrillo"},{"label":"B","text":"Sillar"},{"label":"C","text":"Concreto"},{"label":"D","text":"Madera"}]', 'B'),
+  ('82222222-2222-2222-2222-222222222221', 'Desde el Mirador de Yanahuara se obtiene una vista clásica de la ciudad enmarcada por sus arcos, con un volcán de fondo. ¿Qué volcán?', '[{"label":"A","text":"El Misti"},{"label":"B","text":"El Huascarán"},{"label":"C","text":"El Coropuna"},{"label":"D","text":"El Salcantay"}]', 'A'),
+
+  ('82222222-2222-2222-2222-222222222223', 'El distrito de Yanahuara es reconocido principalmente por su:', '[{"label":"A","text":"Mirador y sus arcos de sillar"},{"label":"B","text":"Puerto marítimo"},{"label":"C","text":"Estación de tren"},{"label":"D","text":"Playa"}]', 'A'),
+  ('82222222-2222-2222-2222-222222222223', 'La iglesia colonial de la Plaza de Yanahuara tiene una portada de estilo:', '[{"label":"A","text":"Art Decó"},{"label":"B","text":"Gótico"},{"label":"C","text":"Futurista"},{"label":"D","text":"Barroco mestizo"}]', 'D'),
+
+  ('82222222-2222-2222-2222-222222222224', 'La momia Juanita, resguardada en el Museo Santuarios Andinos, perteneció a la cultura:', '[{"label":"A","text":"Inca"},{"label":"B","text":"Nazca"},{"label":"C","text":"Mochica"},{"label":"D","text":"Chavín"}]', 'A'),
+  ('82222222-2222-2222-2222-222222222224', 'A la momia Juanita también se le conoce popularmente como:', '[{"label":"A","text":"La Dama de Cao"},{"label":"B","text":"La Dama de Ampato o Doncella de los Hielos"},{"label":"C","text":"La Momia de Paracas"},{"label":"D","text":"La Reina de Chan Chan"}]', 'B'),
+
+  -- ── Capítulo III: El Legado del Chili ──
+  ('83333333-3333-3333-3333-333333333331', 'El Puente Bolognesi conecta el centro histórico de Arequipa con el distrito de:', '[{"label":"A","text":"Yanahuara"},{"label":"B","text":"Sabandía"},{"label":"C","text":"Characato"},{"label":"D","text":"Tiabaya"}]', 'A'),
+  ('83333333-3333-3333-3333-333333333331', '¿Qué río de Arequipa es cruzado por el Puente Bolognesi?', '[{"label":"A","text":"El Rímac"},{"label":"B","text":"El Tambo"},{"label":"C","text":"El Chili"},{"label":"D","text":"El Amazonas"}]', 'C'),
+
+  ('83333333-3333-3333-3333-333333333332', 'El Puente Grau lleva el nombre del héroe naval peruano:', '[{"label":"A","text":"Miguel Grau"},{"label":"B","text":"Francisco Bolognesi"},{"label":"C","text":"Alfonso Ugarte"},{"label":"D","text":"Andrés A. Cáceres"}]', 'A'),
+  ('83333333-3333-3333-3333-333333333332', 'Los puentes Grau y Bolognesi cumplen en Arequipa la función de:', '[{"label":"A","text":"Cruzar el mar"},{"label":"B","text":"Conectar ambas riberas del río Chili"},{"label":"C","text":"Unir dos islas"},{"label":"D","text":"Salvar una quebrada seca"}]', 'B'),
+
+  ('83333333-3333-3333-3333-333333333333', 'El río Chili ha sido históricamente clave para Arequipa porque permite:', '[{"label":"A","text":"El riego de sus campiñas y andenes"},{"label":"B","text":"La pesca de altura"},{"label":"C","text":"El transporte marítimo"},{"label":"D","text":"La minería de oro"}]', 'A'),
+  ('83333333-3333-3333-3333-333333333333', 'El agua del río Chili movía antiguamente la maquinaria de los:', '[{"label":"A","text":"Trenes"},{"label":"B","text":"Telégrafos"},{"label":"C","text":"Faros"},{"label":"D","text":"Molinos, como el de Sabandía"}]', 'D'),
+
+  -- ── Capítulo IV: Ecos de la Historia ──
+  ('84444444-4444-4444-4444-444444444441', 'El escritor arequipeño homenajeado en esta casa museo, Mario Vargas Llosa, es célebre como:', '[{"label":"A","text":"Novelista y ensayista"},{"label":"B","text":"Pintor"},{"label":"C","text":"Compositor musical"},{"label":"D","text":"Físico"}]', 'A'),
+  ('84444444-4444-4444-4444-444444444441', '¿Qué importante reconocimiento internacional recibió Mario Vargas Llosa?', '[{"label":"A","text":"El Premio Óscar"},{"label":"B","text":"El Premio Nobel de Literatura"},{"label":"C","text":"El Balón de Oro"},{"label":"D","text":"La Medalla Fields"}]', 'B'),
+
+  ('84444444-4444-4444-4444-444444444442', 'La función principal de un museo histórico municipal es:', '[{"label":"A","text":"Preservar y difundir la memoria e historia local"},{"label":"B","text":"Vender recuerdos"},{"label":"C","text":"Proyectar películas"},{"label":"D","text":"Alojar turistas"}]', 'A'),
+  ('84444444-4444-4444-4444-444444444442', 'El Museo Histórico Municipal de Arequipa se ubica en:', '[{"label":"A","text":"La periferia industrial"},{"label":"B","text":"La zona del aeropuerto"},{"label":"C","text":"El centro histórico, cerca de la Plaza de Armas"},{"label":"D","text":"La costa"}]', 'C'),
+
+  ('84444444-4444-4444-4444-444444444443', 'El conjunto religioso junto a la Plaza San Francisco pertenece a la orden fundada por:', '[{"label":"A","text":"San Francisco de Asís"},{"label":"B","text":"Santo Domingo de Guzmán"},{"label":"C","text":"San Ignacio de Loyola"},{"label":"D","text":"San Agustín"}]', 'A'),
+  ('84444444-4444-4444-4444-444444444443', 'El templo de San Francisco, junto a la plaza, está construido en gran parte con:', '[{"label":"A","text":"Vidrio"},{"label":"B","text":"Acero"},{"label":"C","text":"Bambú"},{"label":"D","text":"Sillar"}]', 'D'),
+
+  ('84444444-4444-4444-4444-444444444444', 'Un teatro municipal está destinado principalmente a:', '[{"label":"A","text":"Obras de teatro, conciertos y danza"},{"label":"B","text":"Competencias deportivas"},{"label":"C","text":"Ferias industriales"},{"label":"D","text":"Estacionamiento"}]', 'A'),
+  ('84444444-4444-4444-4444-444444444444', 'El Teatro Municipal forma parte del patrimonio cultural de Arequipa porque es:', '[{"label":"A","text":"Un centro comercial"},{"label":"B","text":"Un espacio histórico dedicado a las artes escénicas"},{"label":"C","text":"Una fábrica textil"},{"label":"D","text":"Un mercado de abastos"}]', 'B'),
+
+  -- ── Capítulo V: El Espíritu de la Ciudad Blanca ──
+  ('85555555-5555-5555-5555-555555555551', 'En el Mercado San Camilo de Arequipa es típico encontrar:', '[{"label":"A","text":"Quesos, ajíes y frutas de la región"},{"label":"B","text":"Solo ropa importada"},{"label":"C","text":"Solo aparatos electrónicos"},{"label":"D","text":"Solo artesanía extranjera"}]', 'A'),
+  ('85555555-5555-5555-5555-555555555551', 'Un mercado tradicional como San Camilo es importante para la ciudad porque:', '[{"label":"A","text":"Solo atrae turistas"},{"label":"B","text":"Reemplaza a los supermercados de lujo"},{"label":"C","text":"Abastece de alimentos frescos y conserva la cultura local"},{"label":"D","text":"No tiene valor cultural"}]', 'C'),
+
+  ('85555555-5555-5555-5555-555555555552', 'Los centros culturales de Arequipa promueven principalmente:', '[{"label":"A","text":"El arte y las expresiones culturales locales"},{"label":"B","text":"La venta de automóviles"},{"label":"C","text":"La comida rápida"},{"label":"D","text":"Los deportes extremos"}]', 'A'),
+  ('85555555-5555-5555-5555-555555555552', 'Visitar un centro cultural permite a los estudiantes:', '[{"label":"A","text":"Comprar tecnología"},{"label":"B","text":"Practicar fútbol"},{"label":"C","text":"Abordar un vuelo"},{"label":"D","text":"Conocer y valorar las expresiones artísticas de su región"}]', 'D'),
+
+  ('85555555-5555-5555-5555-555555555554', '¿Qué apodo recibe Arequipa por el color de la piedra de sus edificios históricos?', '[{"label":"A","text":"La Ciudad Blanca"},{"label":"B","text":"La Ciudad Dorada"},{"label":"C","text":"La Ciudad Jardín"},{"label":"D","text":"La Ciudad de los Reyes"}]', 'A'),
+  ('85555555-5555-5555-5555-555555555554', 'Un elemento representativo de la Plaza de Armas de Arequipa es:', '[{"label":"A","text":"Un rascacielos de vidrio"},{"label":"B","text":"Su pileta central y los portales de sillar"},{"label":"C","text":"Un puerto pesquero"},{"label":"D","text":"Un teleférico"}]', 'B')
+) AS v(mission_id, question, options, correct_answer)
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.mission_questions q
+  WHERE q.mission_id = v.mission_id::uuid AND q.question = v.question
+);
