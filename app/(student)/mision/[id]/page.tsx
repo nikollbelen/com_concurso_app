@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   ChevronLeft, MapPin, Camera, HelpCircle, Palette,
-  CheckCircle, Clock, Lock, Star, Send, RotateCcw,
+  CheckCircle, Clock, Lock, Star, Send, RotateCcw, Wifi, WifiOff, CloudOff, RefreshCw,
 } from 'lucide-react'
 import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 
@@ -13,6 +13,8 @@ import { useChapters }     from '@/modules/chapters/presentation/hooks/useChapte
 import { useTeam }         from '@/modules/teams/presentation/hooks/useTeam'
 import { useTeamProgress } from '@/modules/missions/presentation/hooks/useTeamProgress'
 import { useAssignedQuestion } from '@/modules/missions/presentation/hooks/useMissionQuestion'
+import { useOfflineSync }  from '@/modules/missions/presentation/hooks/useOfflineSync'
+import { useSubmitMission, type SubmitResult } from '@/modules/missions/presentation/hooks/useSubmitMission'
 import { Tooltip } from '@/shared/ui/components/Tooltip'
 
 type MissionStatus = 'available' | 'in_progress' | 'completed' | 'review' | 'locked'
@@ -38,12 +40,51 @@ export default function MisionPage() {
 
   const [selected,  setSelected]  = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [subResult, setSubResult] = useState<SubmitResult | null>(null)
   const [photoDesc, setPhotoDesc] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [creativeText, setCreativeText] = useState('')
+
+  const { isOnline, pendingCount, syncStatus, triggerSync } = useOfflineSync(user?.teamId)
+  const { submitTrivia, submitPhoto, submitCreative, submitting } = useSubmitMission()
 
   useEffect(() => { hydrate() }, [hydrate])
   useEffect(() => {
     if (isHydrated && !user) router.replace('/login')
   }, [user, isHydrated, router])
+
+  const handleSubmitTrivia = useCallback(async () => {
+    if (selected === null || !user?.teamId) return
+    const result = await submitTrivia({
+      teamId: user.teamId,
+      missionId: id,
+      selectedAnswer: selected,
+    })
+    setSubmitted(true)
+    setSubResult(result)
+  }, [selected, user?.teamId, id, submitTrivia])
+
+  const handleSubmitPhoto = useCallback(async () => {
+    if (!photoFile || !user?.teamId) return
+    const result = await submitPhoto({
+      teamId: user.teamId,
+      missionId: id,
+      file: photoFile,
+    })
+    setSubmitted(true)
+    setSubResult(result)
+  }, [photoFile, user?.teamId, id, submitPhoto])
+
+  const handleSubmitCreative = useCallback(async () => {
+    if (!creativeText.trim() || !user?.teamId) return
+    const result = await submitCreative({
+      teamId: user.teamId,
+      missionId: id,
+      text: creativeText,
+    })
+    setSubmitted(true)
+    setSubResult(result)
+  }, [creativeText, user?.teamId, id, submitCreative])
 
   if (!isHydrated || !user) return null
 
@@ -108,6 +149,27 @@ export default function MisionPage() {
             {mission.location}
           </p>
         </div>
+
+        {/* Sync status badge */}
+        {!isOnline && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl shrink-0"
+            style={{ background: 'rgba(255,149,0,0.12)', border: '1px solid rgba(255,149,0,0.3)' }}>
+            <WifiOff className="w-3.5 h-3.5" style={{ color: '#ff9500' }} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#ff9500' }}>
+              Sin conexión
+            </span>
+          </div>
+        )}
+        {isOnline && pendingCount > 0 && (
+          <button onClick={triggerSync} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl shrink-0"
+            style={{ background: 'rgba(0,168,255,0.12)', border: '1px solid rgba(0,168,255,0.3)' }}>
+            <RefreshCw className="w-3.5 h-3.5" style={{ color: '#00a8ff' }} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#00a8ff' }}>
+              {syncStatus === 'syncing' ? 'Sincronizando…' : `${pendingCount} pendiente${pendingCount > 1 ? 's' : ''}`}
+            </span>
+          </button>
+        )}
+
         <div className="relative group shrink-0">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
             style={{ background: 'rgba(249,189,34,0.12)', border: '1px solid rgba(249,189,34,0.3)' }}>
@@ -210,24 +272,38 @@ export default function MisionPage() {
             </div>
 
             {!submitted ? (
-              <button onClick={() => selected !== null && setSubmitted(true)}
-                disabled={selected === null}
+              <button onClick={handleSubmitTrivia}
+                disabled={selected === null || submitting}
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white disabled:opacity-40"
                 style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#00d2ff,#00a8ff)', boxShadow: selected !== null ? '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
-                <Send className="w-4 h-4" /> Confirmar respuesta
+                {submitting ? <><RefreshCw className="w-4 h-4 animate-spin" /> Enviando…</> : <><Send className="w-4 h-4" /> Confirmar respuesta</>}
               </button>
             ) : (
               <div className="glass-panel hud-scanline rounded-3xl p-5 text-center"
-                style={{ border: isCorrect ? '1px solid rgba(0,230,118,0.4)' : '1px solid rgba(255,59,48,0.4)' }}>
-                <p className="text-xl mb-1" style={{ fontFamily: 'var(--font-cinzel), serif', color: isCorrect ? '#00e676' : '#ff6b6b', fontWeight: 900 }}>
-                  {isCorrect ? '¡Correcto!' : 'Incorrecto'}
-                </p>
-                <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  {isCorrect ? `+${mission.points} XP añadidos a tu equipo` : `La respuesta correcta era: ${trivia.options[trivia.correctAnswer]}`}
-                </p>
+                style={{ border: !subResult?.synced ? '1px solid rgba(255,149,0,0.4)' : (isCorrect ? '1px solid rgba(0,230,118,0.4)' : '1px solid rgba(255,59,48,0.4)') }}>
+                {subResult?.synced ? (
+                  <>
+                    <p className="text-xl mb-1" style={{ fontFamily: 'var(--font-cinzel), serif', color: isCorrect ? '#00e676' : '#ff6b6b', fontWeight: 900 }}>
+                      {isCorrect ? '¡Correcto!' : 'Incorrecto'}
+                    </p>
+                    <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      {isCorrect ? `+${mission.points} XP añadidos a tu equipo` : `La respuesta correcta era: ${trivia.options[trivia.correctAnswer]}`}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <CloudOff className="w-10 h-10 mx-auto mb-2" style={{ color: '#ff9500' }} />
+                    <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+                      Respuesta guardada
+                    </p>
+                    <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      Sin conexión. Se sincronizará automáticamente cuando recuperes la señal.
+                    </p>
+                  </>
+                )}
                 <div className="flex gap-3">
-                  {!isCorrect && (
-                    <button onClick={() => { setSelected(null); setSubmitted(false) }}
+                  {!isCorrect && subResult?.synced && (
+                    <button onClick={() => { setSelected(null); setSubmitted(false); setSubResult(null) }}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold"
                       style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-exo2), sans-serif' }}>
                       <RotateCcw className="w-4 h-4" /> Reintentar
@@ -255,32 +331,45 @@ export default function MisionPage() {
 
             {!submitted ? (
               <>
-                <button className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-3xl border-2 border-dashed transition-all"
-                  style={{ borderColor: 'rgba(192,132,252,0.3)', background: 'rgba(192,132,252,0.05)' }}
-                  onClick={() => setPhotoDesc('foto-mock.jpg')}>
+                <label className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-3xl border-2 border-dashed transition-all cursor-pointer"
+                  style={{ borderColor: photoFile ? 'rgba(0,230,118,0.4)' : 'rgba(192,132,252,0.3)', background: photoFile ? 'rgba(0,230,118,0.06)' : 'rgba(192,132,252,0.05)' }}>
+                  <input type="file" accept="image/*" capture="environment" className="hidden"
+                    onChange={e => setPhotoFile(e.target.files?.[0] ?? null)} />
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                    style={{ background: photoDesc ? 'rgba(192,132,252,0.2)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(192,132,252,0.3)' }}>
-                    <Camera className="w-7 h-7" style={{ color: '#C084FC' }} />
+                    style={{ background: photoFile ? 'rgba(0,230,118,0.2)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(192,132,252,0.3)' }}>
+                    <Camera className="w-7 h-7" style={{ color: photoFile ? '#00e676' : '#C084FC' }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-bold text-white">{photoDesc ? '📷 foto-mock.jpg' : 'Tomar foto o subir imagen'}</p>
+                    <p className="text-sm font-bold text-white">{photoFile ? photoFile.name : 'Tomar foto o subir imagen'}</p>
                     <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                      {photoDesc ? 'Imagen lista para enviar' : 'Soporta JPG y PNG · máx. 10 MB'}
+                      {photoFile ? `Se comprimirá a WebP (~${Math.round(photoFile.size / 1024)} KB → ~200 KB)` : 'Soporta JPG y PNG · máx. 10 MB'}
                     </p>
                   </div>
-                </button>
-                <button onClick={() => photoDesc && setSubmitted(true)} disabled={!photoDesc}
+                </label>
+                <button onClick={handleSubmitPhoto} disabled={!photoFile || submitting}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white disabled:opacity-40"
-                  style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#d8a5ff,#a855f7)', boxShadow: photoDesc ? '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
-                  <Send className="w-4 h-4" /> Enviar evidencia
+                  style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#d8a5ff,#a855f7)', boxShadow: photoFile ? '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
+                  {submitting ? <><RefreshCw className="w-4 h-4 animate-spin" /> Comprimiendo y enviando…</> : <><Send className="w-4 h-4" /> Enviar evidencia</>}
                 </button>
               </>
             ) : (
               <div className="glass-panel hud-scanline rounded-3xl p-5 text-center"
-                style={{ border: '1px solid rgba(255,149,0,0.4)' }}>
-                <Clock className="w-12 h-12 mx-auto mb-3" style={{ color: '#ff9500' }} />
-                <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>Evidencia enviada</p>
-                <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>El docente revisará tu fotografía y asignará los {mission.points} XP si es válida.</p>
+                style={{ border: subResult?.synced ? '1px solid rgba(255,149,0,0.4)' : '1px solid rgba(255,149,0,0.4)' }}>
+                {subResult?.synced ? (
+                  <>
+                    <Clock className="w-12 h-12 mx-auto mb-3" style={{ color: '#ff9500' }} />
+                    <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>Evidencia enviada</p>
+                    <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>El docente revisará tu fotografía y asignará los {mission.points} XP si es válida.</p>
+                  </>
+                ) : (
+                  <>
+                    <CloudOff className="w-10 h-10 mx-auto mb-2" style={{ color: '#ff9500' }} />
+                    <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>Foto guardada</p>
+                    <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      Sin conexión. Se sincronizará cuando recuperes la señal (comprimida a WebP).
+                    </p>
+                  </>
+                )}
                 <button onClick={() => router.push('/mapa')}
                   className="flex items-center justify-center gap-2 mx-auto px-6 py-3 rounded-2xl text-sm font-bold text-white uppercase tracking-widest"
                   style={{ background: 'linear-gradient(to bottom,#00d2ff,#00a8ff)', boxShadow: '0 4px 0 rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.2)', fontFamily: 'var(--font-exo2), sans-serif' }}>
@@ -302,25 +391,37 @@ export default function MisionPage() {
             {!submitted ? (
               <>
                 <textarea
-                  value={photoDesc}
-                  onChange={e => setPhotoDesc(e.target.value)}
+                  value={creativeText}
+                  onChange={e => setCreativeText(e.target.value)}
                   placeholder="Escribe tu respuesta creativa aquí..."
                   rows={5}
                   className="w-full resize-none rounded-2xl p-4 text-sm text-white placeholder:text-white/25 outline-none"
                   style={{ background: 'rgba(244,114,182,0.06)', border: '1px solid rgba(244,114,182,0.25)', fontFamily: 'var(--font-exo2), sans-serif' }}
                 />
-                <button onClick={() => photoDesc.trim() && setSubmitted(true)} disabled={!photoDesc.trim()}
+                <button onClick={handleSubmitCreative} disabled={!creativeText.trim() || submitting}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white disabled:opacity-40"
-                  style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#f9a8d4,#ec4899)', boxShadow: photoDesc.trim() ? '0 6px 0 rgba(0,0,0,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
-                  <Send className="w-4 h-4" /> Enviar respuesta
+                  style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#f9a8d4,#ec4899)', boxShadow: creativeText.trim() ? '0 6px 0 rgba(0,0,0,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
+                  {submitting ? <><RefreshCw className="w-4 h-4 animate-spin" /> Enviando…</> : <><Send className="w-4 h-4" /> Enviar respuesta</>}
                 </button>
               </>
             ) : (
               <div className="glass-panel hud-scanline rounded-3xl p-5 text-center"
-                style={{ border: '1px solid rgba(255,149,0,0.4)' }}>
-                <Clock className="w-12 h-12 mx-auto mb-3" style={{ color: '#ff9500' }} />
-                <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>Respuesta enviada</p>
-                <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>El jurado revisará tu respuesta creativa y asignará hasta {mission.points} XP.</p>
+                style={{ border: subResult?.synced ? '1px solid rgba(255,149,0,0.4)' : '1px solid rgba(255,149,0,0.4)' }}>
+                {subResult?.synced ? (
+                  <>
+                    <Clock className="w-12 h-12 mx-auto mb-3" style={{ color: '#ff9500' }} />
+                    <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>Respuesta enviada</p>
+                    <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>El jurado revisará tu respuesta creativa y asignará hasta {mission.points} XP.</p>
+                  </>
+                ) : (
+                  <>
+                    <CloudOff className="w-10 h-10 mx-auto mb-2" style={{ color: '#ff9500' }} />
+                    <p className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-cinzel), serif' }}>Respuesta guardada</p>
+                    <p className="text-xs mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      Sin conexión. Se sincronizará automáticamente cuando recuperes la señal.
+                    </p>
+                  </>
+                )}
                 <button onClick={() => router.push('/mapa')}
                   className="flex items-center justify-center gap-2 mx-auto px-6 py-3 rounded-2xl text-sm font-bold text-white uppercase tracking-widest"
                   style={{ background: 'linear-gradient(to bottom,#00d2ff,#00a8ff)', boxShadow: '0 4px 0 rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.2)', fontFamily: 'var(--font-exo2), sans-serif' }}>

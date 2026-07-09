@@ -1,0 +1,37 @@
+{
+    "plugin": [
+        "@warp-dot-dev/opencode-warp@0.1.5",
+        "opencode-codebase-index"
+    ],
+    "$schema": "https://opencode.ai/config.json",
+    "mcp": {
+        "supabase": {
+            "type": "remote",
+            "url": "http://127.0.0.1:54321/mcp?features=database%2Cdevelopment%2Cdebugging%2Cdocs",
+            "enabled": true
+        },
+    },
+    "provider": {
+        "opencode": {
+            "api": "CLAVE_API"
+        },
+        "ollama": {
+            "npm": "@ai-sdk/openai-compatible",
+            "name": "Ollama (local)",
+            "options": {
+                "baseURL": "http://127.0.0.1:11434/v1"
+            },
+            "models": {
+                "granite3.3:8b": {
+                    "name": "granite3.3:8b",
+                },
+            }
+        }
+    },
+    "instructions": [
+        "docs/Arquitectura Técnica y Estrategia - Guardianes de Arequipa V3.md",
+        "docs/Propuesta_Guardianes_de_Arequipa.md",
+        "AGENTS.md",
+        "docs/*",
+    ]
+}
