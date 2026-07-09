@@ -4,6 +4,30 @@ Registro incremental de tareas implementadas por agentes. Cada entrada describe 
 
 ---
 
+## 2026-07-09 — Fix: Mapbox tiles grises al montar el mapa + offline strategy
+
+### Fix: Mapbox tiles no cargaban hasta hacer zoom
+
+Se agregó un `useEffect` que forza `mapRef.current?.resize()` 100ms después del montaje del mapa para que Mapbox recalcule el tile coverage cuando el contenedor ya tiene su altura definitiva.
+
+- **Archivo:** `app/(student)/mapa/page.tsx`
+- **Causa:** El mapa usa `style={{ position: 'fixed', inset: 0 }}`. Mapbox calcula los tiles a renderizar según el tamaño del contenedor en el momento del montaje. Si el contenedor no tiene altura resuelta al primer paint, los cálculos fallan y los tiles quedan grises. Al hacer zoom, Mapbox re-calcula el tile coverage y carga correctamente.
+- **Solución:** `mapRef.current?.resize()` con `setTimeout` de 100ms post-montaje, forzando a Mapbox a re-evaluar el viewport.
+- **Estado:** ✅
+
+### Offline strategy (branch `feat/cosa_a_implementar`)
+
+Se implementó la estrategia completa de tolerancia a fallos de red descrita en la sección 2 del documento de arquitectura técnica.
+
+- **Service Worker:** vía `@serwist/turbopack` con precaché de 44 entradas (9.3 MiB). Registrado solo en producción para evitar bucle de recarga en desarrollo.
+- **IndexedDB:** usando la librería `idb` con tres stores: `pending_responses` (cola de respuestas de trivia/texto), `pending_photos` (cola de fotos pendientes de subir), `cached_missions` (caché de misiones).
+- **Compresión WebP:** `photo-compressor.ts` reduce fotos a ~200 KB vía canvas (`toBlob('image/webp', 0.6)`, max 1200px).
+- **Sincronización automática:** `useOfflineSync` detecta `navigator.onLine` y replay automático al reconectar. `useSubmitMission` intenta Supabase primero, encola en IndexedDB si falla.
+- **Archivos creados:** `app/sw.ts`, `app/manifest.ts`, `app/serwist/[path]/route.ts`, `shared/infrastructure/offline/` (5 archivos), `modules/missions/presentation/hooks/useOfflineSync.ts`, `modules/missions/presentation/hooks/useSubmitMission.ts`
+- **Archivos modificados:** `next.config.ts`, `app/layout.tsx`, `app/(student)/mision/[id]/page.tsx`
+- **Decisión técnica:** Se usó `@serwist/turbopack` en vez de `@serwist/next` porque Next.js 16 usa Turbopack por defecto. El SW se desactiva en desarrollo (`process.env.NODE_ENV === 'development'`) para evitar el bucle de recarga causado por `clientsClaim: true`.
+- **Estado:** ✅ en rama `feat/cosa_a_implementar`
+
 ## 2026-07-09 — Infraestructura de testing + fix logout race + docs
 
 ### Tests (Vitest + Testing Library)
