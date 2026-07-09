@@ -43,6 +43,7 @@ export function useSubmitMission() {
             team_id: params.teamId,
             mission_id: params.missionId,
             status: 'completed',
+            answer: String(params.selectedAnswer),
           },
           { onConflict: 'team_id, mission_id' },
         )
@@ -132,7 +133,7 @@ export function useSubmitMission() {
             team_id: params.teamId,
             mission_id: params.missionId,
             status: 'review',
-            // creative answers are text
+            answer: params.text,
           },
           { onConflict: 'team_id, mission_id' },
         )
