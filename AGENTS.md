@@ -17,12 +17,14 @@ Breaking changes in this version. Read the guide in `node_modules/next/dist/docs
 ## Commands
 
 ```bash
-npm run dev      # next dev
-npm run build    # MUST run before committing — catches type errors
-npm run lint     # ESLint
+npm run dev        # next dev
+npm run build      # MUST run before committing — catches type errors
+npm run lint       # ESLint
+npm run test       # vitest run (single run)
+npm run test:watch # vitest (watch mode)
 ```
 
-**No test infra** (no Jest, Vitest, Playwright). CI only triggers on `supabase/migrations/**` pushes to `main`.
+**CI only triggers on `supabase/migrations/**` pushes to `main`** (no test runner in CI yet).
 
 ## Architecture (light hexagonal, no ports/use-cases)
 
@@ -82,7 +84,9 @@ const { data: usuario } = await supabase.from('usuarios').select('team_id').eq('
 - `import Map, { Marker, type MapRef } from 'react-map-gl/mapbox'`
 - `style={{}}` inline for game colors, never Tailwind classes
 - **Do NOT commit unless explicitly requested with `/commit-all`**
-- After completing a feature, write an entry in `docs/CHANGELOG_AGENTES.md`
+
+## Agent Workflow & Handoff
+1. **Memory and Handoff:** Whenever you finish an important task or implement a new feature, you must update the `docs/CHANGELOG_AGENTES.md` file. Write a brief entry with the date, which files you modified, what technical decisions you made, and the current status. This file will serve as memory for your next session.
 
 ## Migrations (16 files in `supabase/migrations/`)
 
