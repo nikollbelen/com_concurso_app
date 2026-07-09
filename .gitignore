@@ -42,3 +42,9 @@ next-env.d.ts
 
 # supabase (archivos temporales del CLI)
 supabase/.temp/
+
+# opencode config with API keys (never commit)
+.opencode/opencode.json
+
+# opencode auto-generated index
+.opencode/codebase-index.json
