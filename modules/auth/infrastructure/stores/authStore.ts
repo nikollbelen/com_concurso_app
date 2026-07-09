@@ -20,6 +20,7 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null
   isHydrated: boolean
+  isLoggingOut: boolean
   hydrate: () => Promise<void>
   login: (alias: string, pin: string) => Promise<'ok' | 'invalid'>
   logout: () => Promise<void>
@@ -67,11 +68,15 @@ async function fetchProfile(userId: string): Promise<AuthUser | null> {
   }
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
-  user:        null,
-  isHydrated:  false,
+export const useAuthStore = create<AuthState>()((set, get) => ({
+  user:          null,
+  isHydrated:    false,
+  isLoggingOut:  false,
 
   hydrate: async () => {
+    // Si hay un cierre de sesión en curso, ignoramos getSession()
+    // porque devolvería la sesión aún no invalidada (race condition).
+    if (get().isLoggingOut) { set({ isHydrated: true }); return }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { set({ isHydrated: true }); return }
     const user = await fetchProfile(session.user.id)
@@ -96,10 +101,12 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   logout: async () => {
-    // Limpiamos el estado primero (síncrono) para que cualquier redirect a
-    // /login vea user=null de inmediato y no rebote de vuelta al mapa.
-    set({ user: null })
+    // Marcamos el cierre como en curso para que hydrate() (que puede ser
+    // llamado por la página /login antes de que signOut() termine) no
+    // re-pueble el store con una sesión que aún no se invalidó.
+    set({ user: null, isLoggingOut: true })
     await supabase.auth.signOut()
+    set({ isLoggingOut: false })
   },
 }))
 
