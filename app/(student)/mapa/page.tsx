@@ -204,6 +204,14 @@ export default function MapaPage() {
 
   useEffect(() => { hydrate() }, [hydrate])
 
+  /* Force Mapbox to recalc tile coverage after mount — fixes gray tiles when
+     container height isn't settled at first paint (common with fixed/inset). */
+  useEffect(() => {
+    if (!user) return
+    const timer = setTimeout(() => mapRef.current?.resize(), 100)
+    return () => clearTimeout(timer)
+  }, [user])
+
   /* Inicia el seguimiento continuo de la posición (idempotente) */
   const startWatch = useCallback(() => {
     if (watchIdRef.current !== null) return
