@@ -14,6 +14,8 @@ import { useTeam }         from '@/modules/teams/presentation/hooks/useTeam'
 import { useTeamProgress } from '@/modules/missions/presentation/hooks/useTeamProgress'
 import { useAssignedQuestion } from '@/modules/missions/presentation/hooks/useMissionQuestion'
 import { Tooltip } from '@/shared/ui/components/Tooltip'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { useArrivalRadius } from '@/modules/settings/presentation/hooks/useArrivalRadius'
 
 type MissionStatus = 'available' | 'in_progress' | 'completed' | 'review' | 'locked'
 
@@ -35,6 +37,7 @@ export default function MisionPage() {
   const { data: team }          = useTeam(user?.teamId)
   const { data: progressData }  = useTeamProgress(user?.teamId)
   const { data: assignedQuestion } = useAssignedQuestion(user?.teamId, id)
+  const { data: arrivalRadius } = useArrivalRadius()
 
   const [selected,  setSelected]  = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -70,7 +73,7 @@ export default function MisionPage() {
   const teamLevel = team?.level ?? user.level ?? 1
   const isLocked = chapter.requiredLevel > teamLevel
   const progress = progressData?.[mission.id] as MissionStatus | undefined
-  const status: MissionStatus = isLocked ? 'locked' : progress ?? 'available'
+  const status: MissionStatus = isDemoMode ? 'available' : isLocked ? 'locked' : progress ?? 'available'
   // `available` (nunca empezada) e `in_progress` (ya en el lugar) comparten la
   // misma UI de resolución.
   const canSolve = status === 'available' || status === 'in_progress'
@@ -143,6 +146,15 @@ export default function MisionPage() {
         </div>
 
         {/* ─── STATUS: locked ─── */}
+        {isDemoMode && (
+          <div className="flex items-center gap-3 rounded-lg p-4" style={{ background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.3)' }}>
+            <CheckCircle className="w-5 h-5 shrink-0" style={{ color: 'var(--color-game-green)' }} />
+            <div>
+              <p className="text-sm font-bold text-white">Llegada GPS simulada · Demo</p>
+              <p className="text-xs text-white/60">Distancia: 12 m · Radio permitido: {arrivalRadius ?? 35} m · Solo lectura</p>
+            </div>
+          </div>
+        )}
         {status === 'locked' && (
           <div className="glass-panel hud-scanline rounded-3xl p-6 text-center"
             style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -195,7 +207,7 @@ export default function MisionPage() {
                 if (submitted && i === trivia.correctAnswer) { bg = 'rgba(0,230,118,0.15)'; border = '1px solid rgba(0,230,118,0.5)'; color = '#00e676' }
                 if (submitted && selected === i && i !== trivia.correctAnswer) { bg = 'rgba(255,59,48,0.15)'; border = '1px solid rgba(255,59,48,0.5)'; color = '#ff6b6b' }
                 return (
-                  <button key={i} onClick={() => !submitted && setSelected(i)} disabled={submitted}
+                  <button key={i} onClick={() => !submitted && setSelected(i)} disabled={submitted || isDemoMode}
                     className="w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 transition-all"
                     style={{ background: bg, border, color, fontFamily: 'var(--font-exo2), sans-serif' }}>
                     <span className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black shrink-0"
@@ -211,7 +223,7 @@ export default function MisionPage() {
 
             {!submitted ? (
               <button onClick={() => selected !== null && setSubmitted(true)}
-                disabled={selected === null}
+                disabled={selected === null || isDemoMode}
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white disabled:opacity-40"
                 style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#00d2ff,#00a8ff)', boxShadow: selected !== null ? '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
                 <Send className="w-4 h-4" /> Confirmar respuesta
@@ -257,6 +269,7 @@ export default function MisionPage() {
               <>
                 <button className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-3xl border-2 border-dashed transition-all"
                   style={{ borderColor: 'rgba(192,132,252,0.3)', background: 'rgba(192,132,252,0.05)' }}
+                  disabled={isDemoMode}
                   onClick={() => setPhotoDesc('foto-mock.jpg')}>
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
                     style={{ background: photoDesc ? 'rgba(192,132,252,0.2)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(192,132,252,0.3)' }}>
@@ -269,7 +282,7 @@ export default function MisionPage() {
                     </p>
                   </div>
                 </button>
-                <button onClick={() => photoDesc && setSubmitted(true)} disabled={!photoDesc}
+                <button onClick={() => photoDesc && setSubmitted(true)} disabled={!photoDesc || isDemoMode}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white disabled:opacity-40"
                   style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#d8a5ff,#a855f7)', boxShadow: photoDesc ? '0 6px 0 rgba(0,0,0,0.25), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
                   <Send className="w-4 h-4" /> Enviar evidencia
@@ -303,13 +316,14 @@ export default function MisionPage() {
               <>
                 <textarea
                   value={photoDesc}
+                  readOnly={isDemoMode}
                   onChange={e => setPhotoDesc(e.target.value)}
                   placeholder="Escribe tu respuesta creativa aquí..."
                   rows={5}
                   className="w-full resize-none rounded-2xl p-4 text-sm text-white placeholder:text-white/25 outline-none"
                   style={{ background: 'rgba(244,114,182,0.06)', border: '1px solid rgba(244,114,182,0.25)', fontFamily: 'var(--font-exo2), sans-serif' }}
                 />
-                <button onClick={() => photoDesc.trim() && setSubmitted(true)} disabled={!photoDesc.trim()}
+                <button onClick={() => photoDesc.trim() && setSubmitted(true)} disabled={!photoDesc.trim() || isDemoMode}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest text-white disabled:opacity-40"
                   style={{ fontFamily: 'var(--font-exo2), sans-serif', background: 'linear-gradient(to bottom,#f9a8d4,#ec4899)', boxShadow: photoDesc.trim() ? '0 6px 0 rgba(0,0,0,0.25)' : 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
                   <Send className="w-4 h-4" /> Enviar respuesta

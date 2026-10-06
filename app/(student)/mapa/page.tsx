@@ -1,5 +1,7 @@
 'use client'
 
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Map, { Marker, type MapRef } from 'react-map-gl/mapbox'
@@ -289,8 +291,12 @@ export default function MapaPage() {
 
   /* Alumno pulsó "Empezar misión" → la marca en camino (in_progress) en la BD */
   const handleStartMission = useCallback((id: string) => {
+    if (isDemoMode) {
+      router.push(`/mision/${id}`)
+      return
+    }
     startMissionMut.mutate(id)
-  }, [startMissionMut])
+  }, [startMissionMut, router])
 
   /* Alumno pulsó "¡Ya llegué!" → verifica que está dentro de 20 m del marcador */
   const handleConfirmArrival = useCallback(async (id: string): Promise<ArrivalResult> => {

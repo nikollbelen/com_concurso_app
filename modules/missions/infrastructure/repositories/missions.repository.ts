@@ -1,5 +1,7 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
 import { MissionSchema, type Mission } from '@/modules/missions/domain/entities/mission'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { getDemoMissionById, getDemoMissions } from '@/shared/infrastructure/demo/demo-data'
 
 const LETTERS = ['A', 'B', 'C', 'D']
 
@@ -47,6 +49,8 @@ function mapRow(row: MissionRow): Mission {
 
 /** Todas las misiones del concurso. */
 export async function getMissions(): Promise<Mission[]> {
+  if (isDemoMode) return getDemoMissions()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('missions')
@@ -58,6 +62,8 @@ export async function getMissions(): Promise<Mission[]> {
 
 /** Una misión por id (para la vista de detalle /mision/[id]). */
 export async function getMissionById(id: string): Promise<Mission | null> {
+  if (isDemoMode) return getDemoMissionById(id)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('missions')

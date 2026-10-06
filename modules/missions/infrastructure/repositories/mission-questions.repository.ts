@@ -1,4 +1,6 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { getDemoAssignedQuestion } from '@/shared/infrastructure/demo/demo-data'
 import {
   MissionQuestionSchema,
   type MissionQuestion,
@@ -29,6 +31,11 @@ function mapQuestion(row: QuestionRow): MissionQuestion {
 
 /** Todas las variantes de pregunta de una misión (para el editor / conteo). */
 export async function getMissionQuestions(missionId: string): Promise<MissionQuestion[]> {
+  if (isDemoMode) {
+    const question = getDemoAssignedQuestion(0, missionId)
+    return question ? [question] : []
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('mission_questions')
@@ -51,6 +58,8 @@ export async function getAssignedQuestion(
   teamId: number,
   missionId: string,
 ): Promise<MissionQuestion | null> {
+  if (isDemoMode) return getDemoAssignedQuestion(teamId, missionId)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('mission_progression')

@@ -1,5 +1,7 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
 import { ChapterSchema, type Chapter } from '@/modules/chapters/domain/entities/chapter'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { getDemoChapters } from '@/shared/infrastructure/demo/demo-data'
 
 /** Fila cruda de la tabla `chapters` (con join a `fragments`). */
 interface ChapterRow {
@@ -18,6 +20,8 @@ interface ChapterRow {
  * Mapea la fila de Supabase a la entidad de dominio y valida con Zod.
  */
 export async function getChapters(): Promise<Chapter[]> {
+  if (isDemoMode) return getDemoChapters()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('chapters')

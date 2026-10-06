@@ -1,0 +1,148 @@
+{
+  "arrivalRadiusM": 35,
+  "users": [
+    {
+      "id": "demo-student-1",
+      "name": "Lucas Condor",
+      "username": "alumno_demo",
+      "pin": "1234",
+      "role": "student",
+      "teamId": 101,
+      "schoolId": "school-1",
+      "schoolName": "Colegio Independencia Americana",
+      "schoolShortName": "Independencia",
+      "color": "#DC2626",
+      "level": 2,
+      "levelTitle": "Explorador Historico"
+    },
+    {
+      "id": "demo-leader-1",
+      "name": "Prof. Maria Quispe",
+      "username": "docente_demo",
+      "pin": "1234",
+      "role": "leader",
+      "teamId": 101,
+      "schoolId": "school-1",
+      "schoolName": "Colegio Independencia Americana",
+      "schoolShortName": "Independencia",
+      "color": "#A855F7",
+      "level": 2,
+      "levelTitle": "Explorador Historico"
+    },
+    {
+      "id": "demo-director-1",
+      "name": "Dir. Roberto Flores",
+      "username": "director_demo",
+      "pin": "1234",
+      "role": "director",
+      "schoolId": "school-1",
+      "schoolName": "Colegio Independencia Americana",
+      "schoolShortName": "Independencia",
+      "color": "#10B981"
+    },
+    {
+      "id": "demo-admin-1",
+      "name": "Admin Sistema",
+      "username": "admin_demo",
+      "pin": "1234",
+      "role": "admin",
+      "color": "#F59E0B"
+    }
+  ],
+  "teams": [
+    {
+      "id": 101,
+      "name": "Los Condores del Sillar",
+      "schoolId": "school-1",
+      "schoolName": "Colegio Independencia Americana",
+      "color": "#DC2626",
+      "level": 2,
+      "levelTitle": "Explorador Historico",
+      "points": 1250,
+      "nextLevelPoints": 2000,
+      "currentChapterId": "cap-2",
+      "missionsCompleted": 6,
+      "missionsInReview": 2,
+      "leaderId": "demo-leader-1",
+      "members": [
+        { "id": "demo-leader-1", "name": "Prof. Maria Quispe", "alias": "docente_demo", "isLeader": true },
+        { "id": "demo-student-1", "name": "Lucas Condor", "alias": "alumno_demo", "isLeader": false },
+        { "id": "demo-student-2", "name": "Lucia Quispe", "alias": "lquispe", "isLeader": false },
+        { "id": "demo-student-3", "name": "Diego Ramos", "alias": "dramos", "isLeader": false },
+        { "id": "demo-student-4", "name": "Ana Torres", "alias": "atorres", "isLeader": false }
+      ],
+      "earnedFragments": ["frag-sillar"]
+    },
+    {
+      "id": 102,
+      "name": "Los Volcanes del Sur",
+      "schoolId": "school-1",
+      "schoolName": "Colegio Independencia Americana",
+      "color": "#7C3AED",
+      "level": 3,
+      "levelTitle": "Guardian Aprendiz",
+      "points": 1680,
+      "nextLevelPoints": 3000,
+      "currentChapterId": "cap-3",
+      "missionsCompleted": 9,
+      "missionsInReview": 1,
+      "leaderId": "demo-leader-1",
+      "members": [
+        { "id": "demo-leader-1", "name": "Prof. Maria Quispe", "alias": "docente_demo", "isLeader": true },
+        { "id": "demo-student-5", "name": "Valentina Cruz", "alias": "vcruz", "isLeader": false },
+        { "id": "demo-student-6", "name": "Sebastian Huanca", "alias": "shuanca", "isLeader": false },
+        { "id": "demo-student-7", "name": "Fernanda Roca", "alias": "froca", "isLeader": false }
+      ],
+      "earnedFragments": ["frag-sillar", "frag-misti"]
+    }
+  ],
+  "progressByTeam": {
+    "101": {
+      "m-1-1": "completed",
+      "m-1-2": "completed",
+      "m-1-3": "completed",
+      "m-1-4": "completed",
+      "m-1-5": "completed",
+      "m-2-1": "completed",
+      "m-2-2": "review",
+      "m-2-3": "in_progress",
+      "m-2-4": "available",
+      "m-2-5": "review"
+    },
+    "102": {
+      "m-1-1": "completed",
+      "m-1-2": "completed",
+      "m-1-3": "completed",
+      "m-1-4": "completed",
+      "m-1-5": "completed",
+      "m-2-1": "completed",
+      "m-2-2": "completed",
+      "m-2-3": "completed",
+      "m-2-4": "review",
+      "m-2-5": "available"
+    }
+  },
+  "pendingEvidence": [
+    {
+      "id": "demo-review-1",
+      "teamId": 101,
+      "missionId": "m-2-2",
+      "photo": "/images/demo/evidencia-mirador.svg",
+      "createdAt": "2026-10-06T10:15:00.000Z"
+    },
+    {
+      "id": "demo-review-2",
+      "teamId": 101,
+      "missionId": "m-2-5",
+      "photo": "/images/demo/evidencia-selva-alegre.svg",
+      "createdAt": "2026-10-06T10:28:00.000Z"
+    },
+    {
+      "id": "demo-review-3",
+      "teamId": 102,
+      "missionId": "m-2-4",
+      "photo": "/images/demo/evidencia-museo.svg",
+      "createdAt": "2026-10-06T10:42:00.000Z"
+    }
+  ]
+}

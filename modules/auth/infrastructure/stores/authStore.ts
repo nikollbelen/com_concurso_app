@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/shared/infrastructure/supabase/client'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { clearStoredDemoUser, demoLogin, getStoredDemoUser } from '@/shared/infrastructure/demo/demo-data'
 
 export type Role = 'student' | 'leader' | 'director' | 'admin'
 
@@ -77,6 +79,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     // Si hay un cierre de sesión en curso, ignoramos getSession()
     // porque devolvería la sesión aún no invalidada (race condition).
     if (get().isLoggingOut) { set({ isHydrated: true }); return }
+    if (isDemoMode) {
+      set({ user: getStoredDemoUser(), isHydrated: true })
+      return
+    }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { set({ isHydrated: true }); return }
     const user = await fetchProfile(session.user.id)
@@ -84,6 +90,13 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   login: async (alias, pin) => {
+    if (isDemoMode) {
+      const user = demoLogin(alias, pin)
+      if (!user) return 'invalid'
+      set({ user })
+      return 'ok'
+    }
+
     const email = `${alias.trim().toLowerCase()}@guardianes.local`
     console.log('[login] intentando con:', email)
 
@@ -105,6 +118,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     // llamado por la página /login antes de que signOut() termine) no
     // re-pueble el store con una sesión que aún no se invalidó.
     set({ user: null, isLoggingOut: true })
+    if (isDemoMode) {
+      clearStoredDemoUser()
+      set({ isLoggingOut: false })
+      return
+    }
     await supabase.auth.signOut()
     set({ isLoggingOut: false })
   },

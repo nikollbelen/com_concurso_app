@@ -7,6 +7,7 @@ import { useAuthStore } from '@/modules/auth/infrastructure/stores/authStore'
 import { LogoutModal } from '@/shared/ui/components/LogoutModal'
 import { useStudentDashboard } from '@/modules/teams/presentation/hooks/useStudentDashboard'
 import { Tooltip } from '@/shared/ui/components/Tooltip'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
 
 export default function StudentPanelPage() {
   const router = useRouter()
@@ -185,6 +186,16 @@ export default function StudentPanelPage() {
         </div>
 
         {/* ══ Columna derecha: mi equipo + fragmentos + capítulos ══ */}
+        {isDemoMode && (
+          <div className="flex flex-wrap gap-3">
+            <button onClick={() => router.push('/mision/m-1-1')} className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-bold text-white" style={{ background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.4)' }}>
+              <BookOpen className="w-4 h-4" /> Mision de trivia
+            </button>
+            <button onClick={() => router.push('/mision/m-1-5')} className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-bold text-white" style={{ background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.4)' }}>
+              <MapIcon className="w-4 h-4" /> Mision de foto / evidencia
+            </button>
+          </div>
+        )}
         <div className="flex-1 min-w-0 flex flex-col gap-4 mt-4 lg:mt-0">
 
           {/* Mi Equipo */}

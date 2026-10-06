@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Trophy } from 'lucide-react'
-import { supabase } from '@/shared/infrastructure/supabase/client'
+import { useSchoolRanking } from '@/modules/schools/presentation/hooks/useSchoolRanking'
 
 // Interfaces internas adaptadas para los datos reales de Supabase
 export interface SchoolRank {
@@ -16,64 +15,18 @@ const MEDALS = ['🥇', '🥈', '🥉']
 const MEDAL_COLORS = ['#FFD600', '#9E9E9E', '#CD7F32']
 
 export function AdminBottomSheet() {
-  // Estados para almacenar las métricas reales del evento
-  const [top3, setTop3] = useState<SchoolRank[]>([])
-  const [totalSchools, setTotalSchools] = useState<number>(0)
-  const [totalMissionsCompleted, setTotalMissionsCompleted] = useState<number>(0)
-  const [loading, setLoading] = useState<boolean>(true)
-
-  useEffect(() => {
-    const fetchAdminMetrics = async () => {
-      try {
-        // Consultamos la tabla 'schools' ordenando por puntos descendente.
-        // Desempate: a igualdad de puntos, sube el que completó antes su última misión.
-        const { data, error } = await supabase
-          .from('schools')
-          .select('id, name, points, missions_completed, teams(id)')
-          .order('points', { ascending: false })
-          .order('last_completed_at', { ascending: true, nullsFirst: false })
-
-        if (error) throw error
-
-        if (data) {
-          // 1. Calculamos el total de colegios registrados
-          setTotalSchools(data.length)
-
-          // 2. Calculamos la suma acumulada de misiones de todos los colegios
-          const misionesTotales = data.reduce((acc, school) => acc + (school.missions_completed || 0), 0)
-          setTotalMissionsCompleted(misionesTotales)
-
-          // 3. Formateamos y filtramos únicamente los 3 primeros puestos para el podio del footer
-          const formattedTop3: SchoolRank[] = data.slice(0, 3).map((school, index) => ({
-            position: index + 1,
-            name: school.name,
-            points: school.points || 0,
-            // Validación segura para el conteo de arreglos relacionales (JOIN)
-            teams: Array.isArray(school.teams) ? school.teams.length : 0
-          }))
-
-          setTop3(formattedTop3)
-        }
-      } catch (err) {
-        console.error('Error cargando métricas en el HUD administrativo:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAdminMetrics()
-    
-    // OPCIONAL O FUTURO: Si deseas tiempo real puro el día del evento, podrías descomentar esta sección:
-    /*
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
-        fetchAdminMetrics()
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-    */
-  }, [])
+  const { data: schools = [], isLoading: loading, isError } = useSchoolRanking()
+  const totalSchools = schools.length
+  const totalMissionsCompleted = schools.reduce((sum, school) => sum + school.missionsCompleted, 0)
+  const top3: SchoolRank[] = schools
+    .filter(school => school.rankingPosition !== null)
+    .slice(0, 3)
+    .map(school => ({
+      position: school.rankingPosition!,
+      name: school.name,
+      points: school.points,
+      teams: school.totalTeams,
+    }))
 
   // Estado de carga discreto (mantiene el layout HUD fijo para evitar parpadeos molestos en la UI)
   if (loading) {
@@ -109,6 +62,9 @@ export function AdminBottomSheet() {
         <div className="px-4 py-3">
 
           {/* Header */}
+          {isError && (
+            <p className="mb-3 text-xs text-white/70" role="alert">No se pudieron cargar las metricas del evento.</p>
+          )}
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-2">
               <div

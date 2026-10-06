@@ -1,5 +1,7 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
 import type { Team } from '@/modules/teams/domain/entities/team'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { getDemoTeam } from '@/shared/infrastructure/demo/demo-data'
 
 interface TeamRow {
   id: number
@@ -17,6 +19,8 @@ const DEFAULT_NEXT_LEVEL_POINTS = 1500
 
 /** Devuelve el equipo por id, o null si no existe. */
 export async function getTeam(teamId: number): Promise<Team | null> {
+  if (isDemoMode) return getDemoTeam(teamId)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('teams')

@@ -1,5 +1,10 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
 import type { SchoolRanking } from '@/modules/schools/domain/entities/school'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import {
+  getDemoSchoolRanking,
+  getDemoSchoolsDetail,
+} from '@/shared/infrastructure/demo/demo-data'
 
 interface SchoolRow {
   id: string
@@ -18,6 +23,8 @@ interface SchoolRow {
  * se calcula a partir del orden. `totalTeams` sale del conteo de equipos anidados.
  */
 export async function getSchoolRanking(): Promise<SchoolRanking[]> {
+  if (isDemoMode) return getDemoSchoolRanking()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('schools')
@@ -110,6 +117,8 @@ function fullName(u: { nombre: string; apellidos: string | null }): string {
  * miembros (alumnos). El color del equipo se hereda del colegio.
  */
 export async function getSchoolsDetail(): Promise<SchoolDetail[]> {
+  if (isDemoMode) return getDemoSchoolsDetail()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('schools')

@@ -4,6 +4,39 @@ Registro incremental de tareas implementadas por agentes. Cada entrada describe 
 
 ---
 
+## 2026-10-06 - Fix: HUD administrativo del mapa en demo
+
+- Archivos: `shared/ui/components/AdminBottomSheet.tsx`, `modules/schools/presentation/hooks/useSchoolRanking.ts`, este registro.
+- Causa: el HUD consultaba Supabase directamente y omitia los repositorios demo.
+- Ahora consume `useSchoolRanking`, deriva totales y podio del mismo ranking, con datos iniciales demo y cache separada. Los fallos reales muestran un mensaje visible.
+- Estado: TypeScript (`tsc --noEmit`) correcto; JSON verificado con 16 colegios y 379 misiones completadas. Pendiente de comprobacion visual en navegador.
+
+## 2026-10-06 - Fix: acceso a misiones y datos admin en demo
+
+- Archivos: hook `useSchoolRanking.ts`, paginas de mapa, mision y alumno, `MissionBottomSheet.tsx`, `README.md`, este registro.
+- Colegios demo disponibles como datos iniciales con cache separada del modo real.
+- Accesos a trivia y foto desde el panel del alumno y mapa; vista demo independiente del progreso y nivel, con envios desactivados.
+- Llegada GPS simulada visible y rotulada; no solicita ubicacion real ni escribe progreso.
+- Verificacion: TypeScript (`tsc --noEmit`) correcto. Build intentado mediante Git Bash, bloqueado porque npm no esta en el PATH de esta sesion. Pendiente de comprobacion visual en navegador.
+
+## 2026-10-06 — Feature: modo demo local para capturas
+
+Se implementó un modo demo activado por `NEXT_PUBLIC_DEMO_MODE=true` para navegar las vistas principales con datos ficticios cuando Supabase no esté disponible.
+
+- **Archivos creados:** `data/json/demo.json`, `shared/infrastructure/demo/config.ts`, `shared/infrastructure/demo/demo-data.ts`, `public/images/demo/evidencia-*.svg`
+- **Archivos modificados:** `modules/auth/infrastructure/stores/authStore.ts`, repositorios de `chapters`, `missions`, `teams`, `schools`, `settings`, `shared/infrastructure/supabase/client.ts`, `README.md`, `env.example`, `docs/CHANGELOG_AGENTES.md`
+- **Decisión técnica:** El modo demo se conectó en los repositorios y el store de auth para mantener las páginas sin cambios grandes. Las mutaciones de revisión, inicio de misión y ajustes quedan como no-op en demo, de modo que las cuentas compartidas son de solo lectura y no escriben en Supabase. El cliente Supabase permite placeholders solo cuando demo está activo para que la app no dependa de credenciales reales.
+- **Estado:** ✅ pendiente de verificación final de build
+
+## 2026-10-06 — Chore: plantilla de variables de entorno
+
+Se agregó una plantilla versionable para que nuevos entornos puedan crear `.env.local` sin revisar manualmente el README o el código.
+
+- **Archivo creado:** `env.example`
+- **Archivo modificado:** `docs/CHANGELOG_AGENTES.md`
+- **Decisión técnica:** Se usó `env.example` sin punto inicial porque `.gitignore` excluye `.env*`. La plantilla incluye las variables públicas requeridas por Supabase y Mapbox, más `SUPABASE_SERVICE_ROLE_KEY` solo para scripts administrativos locales.
+- **Estado:** ✅
+
 ## 2026-07-09 — Fix: Mapbox tiles grises al montar el mapa + offline strategy
 
 ### Fix: Mapbox tiles no cargaban hasta hacer zoom

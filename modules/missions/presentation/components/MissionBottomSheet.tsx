@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Camera, HelpCircle, Palette, Star, Clock, CheckCircle, Lock, Navigation, ArrowRight, X, MapPinned, Loader2, AlertCircle } from 'lucide-react'
 import { Tooltip } from '@/shared/ui/components/Tooltip'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
 import type { MissionStatus, MissionType } from './MissionMarker'
 
 /* ── types ────────────────────────────────────────────────── */
@@ -176,7 +177,7 @@ export function MissionBottomSheet({
             </div>
 
             {/* CTA: disponible → empezar misión */}
-            {selectedMission.status === 'available' && (
+            {(isDemoMode || selectedMission.status === 'available') && (
               <button
                 onClick={() => onStartMission(selectedMission.id)}
                 disabled={isStarting}
@@ -190,12 +191,12 @@ export function MissionBottomSheet({
               >
                 {isStarting
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> EMPEZANDO…</>
-                  : <><ArrowRight className="w-4 h-4" /> EMPEZAR MISIÓN</>}
+                  : <><ArrowRight className="w-4 h-4" /> {isDemoMode ? 'VER MISIÓN' : 'EMPEZAR MISIÓN'}</>}
               </button>
             )}
 
             {/* CTA: en camino → dirígete al lugar + ¡Ya llegué! */}
-            {selectedMission.status === 'in_progress' && (
+            {!isDemoMode && selectedMission.status === 'in_progress' && (
               <div className="flex flex-col gap-3">
                 <div
                   className="flex flex-col gap-1.5 p-3 rounded-2xl"
@@ -252,7 +253,7 @@ export function MissionBottomSheet({
             )}
 
             {/* Estados finales / bloqueados */}
-            {(selectedMission.status === 'completed' ||
+            {!isDemoMode && (selectedMission.status === 'completed' ||
               selectedMission.status === 'review' ||
               selectedMission.status === 'locked' ||
               selectedMission.status === 'blocked') && (

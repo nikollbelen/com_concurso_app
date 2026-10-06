@@ -2,6 +2,29 @@
 
 Plataforma web para el concurso inter-escolar **"La Búsqueda de los Guardianes de Arequipa"** — 16 instituciones educativas, 5 capítulos, 24 misiones en puntos históricos reales de la ciudad.
 
+## Funcionalidades principales
+
+- Autenticación con Supabase Auth usando alias/PIN y perfiles vinculados a `auth.users`.
+- Roles de usuario: estudiante, docente/líder, director y administrador.
+- Redirección y paneles especializados según rol.
+- Mapa interactivo de Arequipa con misiones ubicadas en puntos históricos reales.
+- Geolocalización del estudiante y validación de llegada con cálculo de distancia.
+- Radio de llegada configurable desde la app.
+- Flujo de misión con estados: `available`, `in_progress`, `review`, `completed`, `rejected`, `locked` y `blocked`.
+- Restricción para que un equipo solo tenga una misión activa a la vez.
+- Misiones tipo trivia, foto/evidencia y creativa.
+- Asignación estable de una variante de pregunta cuando el equipo inicia una misión.
+- Progreso por equipo, capítulo, colegio y usuario.
+- Sistema de capítulos, niveles, puntos, fragmentos coleccionables e insignias.
+- Ranking de colegios con podio y posiciones.
+- Tablero vivo para proyección pública durante el concurso.
+- Panel del estudiante con resumen del equipo, miembros, progreso, misiones y fragmentos.
+- Panel del docente/líder para revisar evidencias pendientes y aprobar o rechazar misiones.
+- Panel del director para revisar equipos y rendimiento de su colegio.
+- Panel administrador con métricas globales por colegios y equipos.
+- Base de datos con migraciones, seed, vistas SQL, triggers y políticas RLS.
+- Datos mock temporales para vistas que todavía pueden funcionar sin conexión completa a Supabase.
+
 ## Stack
 
 | Capa | Tecnología |
@@ -25,13 +48,20 @@ Plataforma web para el concurso inter-escolar **"La Búsqueda de los Guardianes 
 
 ## Correr en local
 
-**1. Clonar e instalar dependencias**
+**1. Clonar el repositorio**
+
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd com_concurso_app
+```
+
+**2. Instalar dependencias**
 
 ```bash
 npm install
 ```
 
-**2. Configurar variables de entorno**
+**3. Configurar variables de entorno**
 
 Crea `.env.local` en la raíz del proyecto:
 
@@ -42,13 +72,37 @@ NEXT_PUBLIC_MAPBOX_TOKEN=pk.xxxxxxxxxxxxxxxx
 # Supabase (obligatorio para autenticación y BD)
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxxxxxxxxxxxxxxx
+
+# Modo demo local (opcional)
+NEXT_PUBLIC_DEMO_MODE=false
 ```
 
 Estos valores se obtienen en el [Dashboard de Supabase](https://supabase.com/dashboard) → tu proyecto → Settings → API.
 
-> El token de Mapbox puede ser el del plan gratuito (50,000 cargas/mes).
+> El token de Mapbox puede ser el del plan gratuito. Si usas Supabase local, primero ejecuta las migraciones y seed indicados en la sección de base de datos.
 
-**3. Iniciar el servidor de desarrollo**
+### Modo demo para capturas
+
+Si Supabase no está disponible o necesitas compartir accesos de solo lectura para revisar las vistas, activa el modo demo:
+
+```env
+NEXT_PUBLIC_DEMO_MODE=true
+```
+
+Con este modo la app usa datos ficticios locales desde `data/json/` y las acciones de escritura quedan simuladas. Credenciales disponibles:
+
+| Rol | Alias | PIN |
+|-----|-------|-----|
+| Alumno | `alumno_demo` | `1234` |
+| Docente/líder | `docente_demo` | `1234` |
+| Director | `director_demo` | `1234` |
+| Admin | `admin_demo` | `1234` |
+
+El panel del alumno incluye accesos a `/mision/m-1-1` (trivia) y `/mision/m-1-5` (foto/evidencia). Tambien puedes abrir las misiones desde el mapa con "VER MISION", independientemente de su progreso. Las vistas muestran preguntas y evidencia requerida con los envios desactivados. La llegada GPS es una muestra simulada, identificada como demo; no solicita tu ubicacion ni modifica el progreso. El administrador carga los colegios y equipos locales desde el primer render.
+
+Reinicia el servidor despues de cambiar `NEXT_PUBLIC_DEMO_MODE`; para un despliegue debes volver a generar el build.
+
+**4. Iniciar el servidor de desarrollo**
 
 ```bash
 npm run dev
@@ -162,17 +216,16 @@ data/json/               ← datos mock (temporal hasta integrar Supabase)
 
 | Ruta | Estado | Fuente de datos |
 |------|--------|----------------|
-| `/mapa` | ⏳ Placeholder | Mock JSON |
+| `/mapa` | ✅ Funcional | Supabase + Mapbox + GPS |
 | `/login` | ✅ Completa | Supabase Auth |
-| `/mision/[id]` | ⏳ Placeholder | Mock JSON |
+| `/mision/[id]` | ✅ Funcional | Supabase |
 | `/student/panel` | ✅ Completa | Supabase |
 | `/ranking` | ✅ Completa | Supabase |
 | `/leader/panel` | ✅ Completa | Supabase |
-| `/insignias` | ⏳ Placeholder | Mock JSON |
-| `/director/panel` | ⏳ Placeholder | Mock JSON |
-| `/admin/panel` | ⏳ Placeholder | Mock JSON |
+| `/director/panel` | ✅ Funcional | Supabase |
+| `/admin/panel` | ✅ Funcional | Supabase |
 | `/perfil` | ⏳ Placeholder | — |
-| `/tablero-vivo` | ⏳ Placeholder | — |
+| `/tablero-vivo` | ✅ Funcional | Supabase |
 
 ## Datos mock
 
@@ -207,7 +260,14 @@ const [equipo, stats] = await Promise.all([
 
 ## Tests
 
-El proyecto no tiene infraestructura de tests configurada (sin Jest, Vitest, Playwright, ni archivos `.test.ts`). Esto es una deuda técnica pendiente.
+El proyecto tiene Vitest configurado en `package.json`:
+
+```bash
+npm run test
+npm run test:watch
+```
+
+La cobertura de pruebas todavía debe ampliarse, especialmente en flujos de misión, validación GPS, revisión docente y reglas de progreso por equipo.
 
 ## Convenciones de código
 

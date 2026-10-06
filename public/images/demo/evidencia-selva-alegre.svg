@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Evidencia demo de Parque Selva Alegre">
+  <rect width="640" height="360" fill="#102033"/>
+  <rect y="250" width="640" height="110" fill="#134e4a"/>
+  <circle cx="520" cy="76" r="34" fill="#ff9500"/>
+  <path d="M70 260 L130 120 L190 260 Z" fill="#0f766e"/>
+  <path d="M170 260 L245 90 L320 260 Z" fill="#16a34a"/>
+  <path d="M325 260 L400 110 L475 260 Z" fill="#15803d"/>
+  <path d="M458 260 L525 135 L592 260 Z" fill="#22c55e"/>
+  <rect x="48" y="282" width="544" height="42" rx="12" fill="rgba(15,23,42,.74)"/>
+  <text x="320" y="309" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#e8f4ff">Foto demo: Parque Selva Alegre</text>
+</svg>

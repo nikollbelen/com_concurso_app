@@ -1,4 +1,6 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { getDemoStudentDashboard } from '@/shared/infrastructure/demo/demo-data'
 
 export interface StudentChapter {
   id: string
@@ -74,6 +76,8 @@ const isReview = (s: string) => s === 'review' || s === 'pendiente'
 
 /** Dashboard del alumno: nivel/puntos del equipo, fragmentos y progreso por capítulo. */
 export async function getStudentDashboard(teamId: number): Promise<StudentDashboard> {
+  if (isDemoMode) return getDemoStudentDashboard(teamId)
+
   const [teamRes, teamMetaRes, chaptersRes, progressRes, schoolsCountRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).from('vista_equipos_completos').select('*').eq('team_id', teamId).maybeSingle(),

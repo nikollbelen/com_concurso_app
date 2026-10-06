@@ -1,4 +1,9 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import {
+  getDemoLeaderReviewData,
+  getDemoTeamProgress,
+} from '@/shared/infrastructure/demo/demo-data'
 
 interface ProgressRow {
   mission_id: string
@@ -10,6 +15,8 @@ interface ProgressRow {
  * Si el equipo no tiene filas (juego recién empezado) devuelve un objeto vacío.
  */
 export async function getTeamProgress(teamId: number): Promise<Record<string, string>> {
+  if (isDemoMode) return getDemoTeamProgress(teamId)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('mission_progression')
@@ -81,6 +88,12 @@ async function pickRandomVariantId(missionId: string): Promise<string | null> {
  * misma pregunta aunque reabra la misión.
  */
 export async function startMission(teamId: number, missionId: string): Promise<void> {
+  if (isDemoMode) {
+    void teamId
+    void missionId
+    return
+  }
+
   // Guardia: ¿el equipo ya tiene otra misión activa?
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: active, error: activeErr } = await (supabase as any)
@@ -193,6 +206,8 @@ export interface LeaderTeamReview {
  * nombre de equipo. Devuelve `[]` si el docente aún no lidera ningún equipo.
  */
 export async function getLeaderReviewData(leaderId: string): Promise<LeaderTeamReview[]> {
+  if (isDemoMode) return getDemoLeaderReviewData(leaderId)
+
   // 1. Equipos liderados por este docente (relación de líder, no de miembro)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: teamRows, error: teamErr } = await (supabase as any)
@@ -274,6 +289,12 @@ export async function setMissionStatus(
   progressionId: string,
   status: 'completed' | 'rejected',
 ): Promise<void> {
+  if (isDemoMode) {
+    void progressionId
+    void status
+    return
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('mission_progression')

@@ -1,4 +1,6 @@
 import { supabase } from '@/shared/infrastructure/supabase/client'
+import { isDemoMode } from '@/shared/infrastructure/demo/config'
+import { getDemoArrivalRadius } from '@/shared/infrastructure/demo/demo-data'
 
 /** Radio (metros) por defecto si la BD aún no responde o el valor es inválido. */
 export const DEFAULT_ARRIVAL_RADIUS_M = 20
@@ -7,6 +9,8 @@ const ARRIVAL_RADIUS_KEY = 'arrival_radius_m'
 
 /** Lee el radio de llegada (geofence) configurado por el admin. */
 export async function getArrivalRadius(): Promise<number> {
+  if (isDemoMode) return getDemoArrivalRadius()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('app_settings')
@@ -22,6 +26,11 @@ export async function getArrivalRadius(): Promise<number> {
 
 /** Guarda el radio de llegada (solo admin, según RLS). */
 export async function setArrivalRadius(meters: number): Promise<void> {
+  if (isDemoMode) {
+    void meters
+    return
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('app_settings')
